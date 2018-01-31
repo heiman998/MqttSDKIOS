@@ -1,0 +1,21 @@
+//
+//  HMSoundAndLightAlarm.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/5.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface HMSoundAndLightAlarm : NSObject
+
+//声光警号
+
+//声音开关
+@property (nonatomic, assign)NSInteger onoff;
+
+//DT 报警时间
+@property (nonatomic, assign)NSInteger alarmTimer;
+
+@end

@@ -1,0 +1,1191 @@
+//
+//  HMMQTTSdkEncoder.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/11/30.
+//  Copyright © 2017年 mac. All rights reserved.
+
+// * @Description : 网关协议
+// * @Modify record : InformationType +DestinationID+SourceID+sn+cmd +len+ +data
+// * 注：0x0001的格式为16进制，2个byte。0x32的格式为16进制，1个byte。其他则为ASSIC码的可见字符。
+// * 其中data里面含rc+data的数据
+
+#import "HMMQTTSdkEncoder.h"
+#import "HmBaseInfoModel.h"
+#import "HMBaseTLV.h"
+#import "HmEncrypt.h"
+#import "HmUtils.h"
+
+@interface HMMQTTSdkEncoder ()
+
+@property (nonatomic, assign) NSInteger en;
+
+@end
+
+@implementation HMMQTTSdkEncoder
+
+
+/**
+ 获取设备版本信息
+ @param  device 设备属性
+ @return 设备版本信息
+ */
+-(NSData *)getEditionDataWithDevice:(HMDevice *)device{
+    
+    Byte by[3];
+    by[2] = 0x31;
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSInteger cmd = DEVICE_BASIC_INFORMATION;
+    NSData *mData = [NSData dataWithBytes:by length:3];
+    NSData *mDatas = [self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ 获取网关参数信息
+ @param device 设备属性
+ @return 获取网关数据
+ */
+-(NSData *)getGatewayInfoWithDevice:(HMDevice *)device{
+ 
+    Byte by[3];
+    by[2] = 0x31;
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSInteger cmd = GW_GET_BASIC ;
+    NSData *mData = [NSData dataWithBytes:by length:3];
+    NSData *mDatas = [self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+
+/**
+ 时区设置
+
+ @return 时区数据
+ */
+-(NSData *)setTimerZoneWithDevice:(HMDevice *)device{
+    NSString * timerZone = device.timeZone;
+    if([HmUtils isEmptyString:timerZone]){return nil;}
+    int timerZ = 0;
+    if([timerZone rangeOfString:@"-"].location != NSNotFound){
+        timerZ = 0x1000;
+        float timerF = [[timerZone substringFromIndex:1] floatValue];
+        timerZ += timerF * 100;
+    }else if ([timerZone rangeOfString:@"+"].location != NSNotFound){
+        float timerF = [[timerZone substringFromIndex:1] floatValue];
+        timerZ += timerF * 100;
+    }else{
+        float timerF = [[timerZone substringFromIndex:0] floatValue];
+        timerZ += timerF * 100;
+    }    
+    Byte by[4];
+    by[2] = (Byte)((timerZ >> 8) & 0xff);
+    by[3] = (Byte)((timerZ >> 0) & 0xff);
+    NSInteger cmd = GW_TIME_ZONE;
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSData *mData = [NSData dataWithBytes:by length:4];
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ 获取秘钥
+ @return 返回秘钥编码
+ */
+-(NSData *) getSecretKeyWithDevice:(HMDevice *)device{
+  
+    Byte by[3];
+    by[2] = 0x31;
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSInteger cmd = GET_AES_KEY ;
+    NSData *mData = [NSData dataWithBytes:by length:3];
+    NSData *mDatas = [self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+/**
+ 设置网关参数信息
+ @param  gatewayInfo 网关参数模型
+ @return 网关参数
+ */
+-(NSData *)setGatewayInfo:(HMGatewayModel *)gatewayInfo andDevice:(HMDevice *)device{
+   
+    if(gatewayInfo == nil){return nil;}
+    Byte data[]  = {0xff};
+    Byte by[12];
+    self.en = 0;
+    [self charEnableBitwith:(BOOL)(gatewayInfo.Alarmlevel >= 0 && gatewayInfo.Alarmlevel < 100) enNum:0x01 by:by num:4 propertyValue:gatewayInfo.Alarmlevel];
+    [self charEnableBitwith:(BOOL)(gatewayInfo.Soundlevel > 0 && gatewayInfo.Soundlevel < 100) enNum:0x02 by:by num:5 propertyValue:gatewayInfo.Soundlevel];
+    [self charEnableBitwith:(BOOL)(gatewayInfo.Betimer > 0 && gatewayInfo.Betimer < 100) enNum:0x04 by:by num:6 propertyValue:gatewayInfo.Betimer];
+    [self charEnableBitwith:(BOOL)(gatewayInfo.Gwlanguage == 0x31 || gatewayInfo.Gwlanguage == 0x32) enNum:0x08 by:by num:7 propertyValue:gatewayInfo.Gwlanguage];
+    [self charEnableBitwith:(BOOL)(gatewayInfo.Gwlightlevel > 0 && gatewayInfo.Gwlightlevel < 100) enNum:0x10 by:by num:8 propertyValue:gatewayInfo.Gwlightlevel];
+    if(gatewayInfo.Gwlightonoff == 0 || gatewayInfo.Gwlightonoff == 1){
+        self.en += 0x20;
+        by[9] =(Byte)((gatewayInfo.Gwlightonoff  & 0xff) | 0x30);
+    }else{
+        by[9] = data[0];
+    }
+    [self charEnableBitwith:(BOOL)(gatewayInfo.Lgtimer > 0 && gatewayInfo.Lgtimer < 100) enNum:0x40 by:by num:10 propertyValue:gatewayInfo.Lgtimer];
+    if(gatewayInfo.Armtype == 0 || gatewayInfo.Armtype == 1 || gatewayInfo.Armtype == 2){
+        self.en += 0x80;
+        by[11] =(Byte)((gatewayInfo.Armtype  & 0xff) | 0x30);
+    }else{
+        by[11] = data[0];
+    }
+    Byte data1[] = {0xff,0xff};
+    by[0] = data1[0];
+    by[1] = data1[1];
+    by[2] = (Byte)((self.en >> 8) & 0xff);
+    by[3] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mData = [NSData dataWithBytes:by length:12];
+    NSInteger cmd = GW_BASIC_INFORMATION;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ * 网关设备进入联网模式 
+ * 使能设备加网  0x30表示退出入网模式,0x31表示进入入网模式；
+ * @param enable 0为允许，1为不允许
+ * @return 添加设备入网 或者 退网数据
+ */
+-(NSData *)addSubDevice:(Boolean) enable andDevice:(HMDevice *)device{
+    Byte by[3];
+    if(enable){
+        by[2] = 0x31;
+    }else{
+        by[2] = 0x30;
+    }
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSData *mData = [NSData dataWithBytes:by length:3];
+    NSInteger cmd = GW_ADD_DEVICE;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return  mDatas;
+}
+
+/**
+ * 设置网关ip
+ * @param device   网关设备
+ * @param ip       设备ip地址
+ * @return 设置网关ip
+ */
+-(NSData *)setGatewayIP:(NSString *)ip andDevice:(HMDevice *)device{
+  
+    if ([HmUtils isEmptyString:ip]) {return nil;}
+    NSData * data0 = [ip dataUsingEncoding:NSUTF8StringEncoding];
+    Byte * dataByte = (Byte *)[data0 bytes];
+    Byte by0[data0.length];
+    for (int i = 0;  i < data0.length; i++) {
+        by0[i] = dataByte[i];
+    }
+    Byte by[2 + data0.length];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    for (int i = 0; i < data0.length; i++) {
+        by[2+i] = by0[i];
+    }
+    NSData *mData = [NSData dataWithBytes:by length:2+data0.length];
+    NSInteger cmd = GWGW_SET_IP;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ * 获取子设备数据
+ * @param hmDevice
+ *         网关设备
+ * @param cmd
+ *         设备属性
+ * @param index
+ *         子设备Index索引
+ * @return 获取子设备数据
+ */
+-(NSData *)getSubDevice:(HMDevice *)hmDevice andIndex:(NSInteger) index andCmd:(NSInteger)cmd{
+   
+    Byte data[] = {0xff,0xff};
+    if (cmd == GW_SUB_SE_GET) {
+        Byte  by[6];
+        by[0] = data[0];
+        by[1] = data[1];
+        by[2] = (Byte)((index >> 8) & 0xff);
+        by[3] = (Byte)((index >> 0) & 0xff);
+        by[4] = data[0];
+        by[5] = data[1];
+        NSData *mData = [NSData dataWithBytes:by length:6];
+        NSData *mDatas =[self setBaseGateway:cmd data:mData device:hmDevice];
+        return mDatas;
+    }else{
+        Byte  by[4];
+        by[0] = data[0];
+        by[1] = data[1];
+        by[2] = (Byte)((index >> 8) & 0xff);
+        by[3] = (Byte)((index >> 0) & 0xff);
+        NSData *mData = [NSData dataWithBytes:by length:6];
+        NSData *mDatas =[self setBaseGateway:cmd data:mData device:hmDevice];
+        return mDatas;
+    }
+}
+
+/**
+ * 获取ZB设备单项状态值
+ * @param hmDevice  网关设备
+ * @param index     子设备Index索引
+ * @return          ZB设备单项状态值
+ */
+- (NSData *)getZBDeviceSingleStateandDevice:(HMDevice *)hmDevice andIndex:(NSInteger)index andNumber:(NSInteger)number {
+    
+    if (index < 0 || number > 30 || number < 0) {return nil;}
+    Byte data[] = {0xff,0xff};
+    Byte by[5];
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    by[4] = (Byte)(number & 0xff);
+    NSData *mData = [NSData dataWithBytes:by length:5];
+    NSInteger cmd = GW_SUB_GS ;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:hmDevice];
+    return mDatas;
+}
+
+/**
+ * 删除子设备
+ * @param index 设备索引
+ * @return 删除设备数据
+ */
+-(NSData *)deleteSubDevice:(NSInteger) index andDevice:(HMDevice *)hmDevice{
+   
+    if (index < 0) {return nil;}
+    Byte by[4];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSData *mData = [NSData dataWithBytes:by length:4];
+    NSInteger cmd = SUB_DEL;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:hmDevice];
+    return mDatas;
+}
+/**
+ * 固件升级
+ *
+ * @param fType  值0x01,为wifi固件；值0x02,为ZigBee协调器固件；值0x03,为ZigBee子设备固件；值0x04,为声音升级。
+ * @param enable 2表示允许更新，否则不允许更新
+ * @param type   设备类型当升级设备类型为zigbee子设备有时效。
+ * @return 固件升级信息
+ */
+-(NSData *)upDatairmware:(NSInteger) fType enable:(Boolean)enable type:(NSInteger)type andDevice:(HMDevice *)device{
+   
+    if (fType != 0x01 && fType != 0x02 && fType != 0x03 && fType != 0x04) {return nil;}
+    Byte by[5];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)(fType & 0xff);
+    if(enable){
+        by[3] = 0x02;
+    }else{
+        by[3] = 0x00;
+    }
+    by[4] = (Byte)(type  & 0xff);
+    NSData *mData = [NSData dataWithBytes:by length:5];
+    NSInteger cmd = GW_UP_DATA;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+/**
+ * 设置联动小夜灯设备
+ *
+ * @param device 网关设备
+ * @param enable     01使能,00禁能；
+ * @param subList  子设备的index列表
+ * @return 小夜灯设备信息
+ */
+-(NSData *)setLinkNightLightWithSubList:(NSArray *)subList enable:(Boolean)enable andDevice:(HMDevice *)device{
+   
+    if ([HmUtils isEmptyArray:subList]) {return nil;}
+    Byte by[4 + subList.count * 2];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    if (enable == YES) {
+        by[2] = 0x01;
+    }else{
+        by[2] = 0x00;
+    }
+    by[3] = (subList.count & 0xff);
+    for (int i = 0; i < subList.count ; i++) {
+        int index = (int)subList[i];
+        by[i+4] = (Byte)((index >> 8) & 0xff);
+        by[i+5] = (Byte)((index >> 0) & 0xff);
+    }
+    NSData *mData = [NSData dataWithBytes:by length:4 + subList.count * 2];
+    NSInteger cmd = GW_SET_NIGHT_LIGHT;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ * 设置网关在家庭布防模式下报警设备
+ *
+ * @param device 网关设备
+ * @param subList  子设备的index列表
+ * @return 小夜灯设备信息
+ */
+-(NSData *)setWashSubListWithSubList:(NSArray *)subList  andDevice:(HMDevice *)device{
+    
+    if ([HmUtils isEmptyArray:subList]) {return nil;}
+    Byte by[3 + subList.count * 2];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (subList.count & 0xff);
+    for (int i = 0; i < subList.count ; i++) {
+        int index = (int)subList[i];
+        by[i+3] = (Byte)((index >> 8) & 0xff);
+        by[i+4] = (Byte)((index >> 0) & 0xff);
+    }
+    NSData *mData = [NSData dataWithBytes:by length:3 + subList.count * 2];
+    NSInteger cmd = GW_SET_WASH_SUB;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    
+    return mDatas;
+}
+
+/**
+ * 一键控制ZIGBEE灯
+ *
+ * @param device 网关设备
+ * @param onoff    1控制zigbee灯全开；（若为0则控制zigbee灯全关）
+ * @return 一键控制ZIGBEE灯信息
+ */
+-(NSData *)setLightOnoffWithSwitch:(int)onoff andDevice:(HMDevice *)device{
+   
+    if (onoff != 0 && onoff != 1) {return nil;}
+    Byte by[3];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (onoff & 0xff);
+    NSData *mData = [NSData dataWithBytes:by length:3];
+    NSInteger cmd = GW_SET_ALLLIGHT_ONOFF;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ 获取撤、布防、在家布防定时器信息
+ @param  device 设备属性
+ @return 获取撤、布防、在家布防定时器信息
+ */
+- (NSData *)getAlarmTimerWithDevice:(HMDevice *)device{
+  
+    Byte by[3];
+    by[2] = 0x01;
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    NSInteger cmd = GW_GET_ALARM_TIMER;
+    NSData *mData = [NSData dataWithBytes:by length:3];
+    NSData *mDatas = [self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+/**
+ * 设置撤、布防、在家布防定时器
+ * 撤防：将所有门磁、红外的撤布防状态设置为“撤防”；
+ * 布防：将所有门磁、红外的撤布防状态设置为“布防”；
+ * 在家布防：由用户选择所需要布防的门磁、红外，选择的设备将被设置为“布防”，没有选择的设备将被设置为“撤防”；
+ *
+ * @param type     1为在家布放 2为外出布放 0撤防
+ * @param device 网关设备
+ * @param hmTimer  海曼定时器
+ */
+-(NSData *)setAlarmTimerWithType:(NSInteger)type andDevice:(HMDevice *)device andHmTimer:(HMTimer *)hmTimer{
+   
+    if (type < 0 || type > 2) {return nil;}
+    Byte by[8];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (type & 0xff);
+    [self timerClockSettingWithEnNum:0 by:by num:3 month:hmTimer.month day:hmTimer.day hour:hmTimer.hour minutes:hmTimer.minutes];
+    [self charEnableBitwith:(BOOL)(hmTimer.wf != -1) enNum:0 by:by num:7 propertyValue:hmTimer.wf];
+    NSData *mData = [NSData dataWithBytes:by length:8];
+    NSInteger cmd = GW_SET_ALARM_TIMER;
+    NSData *mDatas =[self setBaseGateway:cmd data:mData device:device];
+    return mDatas;
+}
+
+#pragma mark  --------------------------设置子设备属性-------------------------------------
+/**
+ * 设置子设备属性
+ * @param type   设备类型
+ * @param index  设备索引
+ * @param object 设备信息
+ * @return   子设备属性数据
+ */
+-(NSData *)setDevicePropertyWithIndex:(DEVICE_TYPE)type deviceIndex:(NSInteger)index deviceInfo:(NSObject *) object andDevice:(HMDevice *)device{
+  
+    NSUInteger cmd  = GW_SUB_SE_SET;
+    NSData * mdata = [NSData data];
+    switch (type) {
+        case DEVICE_TYPE_ZIGBEE_RGB:
+            mdata = [self setBaseGateway:cmd data:[self RGBLightSetting:(HMRgbLight *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_DOORS:
+            mdata = [self setBaseGateway:cmd data:[self magneticDoorSetting:(HMMagneticDoor *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_WATER:
+            mdata = [self setBaseGateway:cmd data:[self waterLeachSetting:(HMWaterLeach *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_PIR:
+            mdata = [self setBaseGateway:cmd data:[self pirSetting:(HMPir *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_SMOKE:
+            mdata = [self setBaseGateway:cmd data:[self smokeSetting:(HMSmoke *)object andIndex:index] device:device] ;
+            break;
+        case DEVICE_TYPE_ZIGBEE_GAS:
+            mdata = [self setBaseGateway:cmd data:[self gasSetting:(HMGas *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_CO:
+            mdata = [self setBaseGateway:cmd data:[self coSetting:(HMCo *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOS:
+            mdata = [self setBaseGateway:cmd data:[self sosSetting:(HMSos *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_SW:
+            mdata = [self setBaseGateway:cmd data:[self swSetting:(HMSw *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_PLUGIN:
+            mdata = [self setBaseGateway:cmd data:[self plugSetting:(HMPlug *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_METRTING_PLUGIN:
+            mdata = [self setBaseGateway:cmd data:[self metringPlugSetting:(HMMetringPlug *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_ONE_ONOFF:
+            mdata = [self setBaseGateway:cmd data:[self switchOneSetting:(HMSwitch *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_TWO_ONOFF:
+            mdata = [self setBaseGateway:cmd data:[self switchTwoSetting:(HMSwitch *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_THREE_ONOFF:
+            mdata = [self setBaseGateway:cmd data:[self switchThreeSetting:(HMSwitch *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_WIFI_RC:
+            mdata = [self setBaseGateway:cmd data:[self rfirControllSetting:(HMRfirControll *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_RELAY:
+            mdata = [self setBaseGateway:cmd data:[self relaySetting:(HMRelay *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_LAMP_HEADER:
+            mdata = [self setBaseGateway:cmd data:[self lampHeaderSetting:(HMLampHeader *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_FOUR_WHEEL:
+            mdata = [self setBaseGateway:cmd data:[self fourLightSetting:(HMFourLight *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOUND_AND_LIGHT_ALARM:
+            mdata = [self setBaseGateway:cmd data:[self soundAndLightAlarmSetting:(HMSoundAndLightAlarm *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_AIR:
+            mdata = [self setBaseGateway:cmd data:[self airSetting:(HMAir *)object andIndex:index] device:device];
+            break;
+           
+        case DEVICE_TYPE_ZIGBEE_ILLUMINANCE:
+            mdata = [self setBaseGateway:cmd data:[self  illuminanceSetting:(HMIlluminance *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_THERMOSTAT:
+            mdata = [self setBaseGateway:cmd data:[self  thermostatSetting:(HMThermostat *)object andIndex:index] device:device];
+            break;
+        case DEVICE_TYPE_ZIGBEE_THP:
+            mdata = [self setBaseGateway:cmd data:[self  thpSetting:(HMThp *)object andIndex:index] device:device];
+            break;
+        default:
+            break;
+    }
+    return mdata;
+}
+
+/**
+ *  一路开关
+ *  switchOne  一路开关对象
+ */
+-(NSData *)switchOneSetting:(HMSwitch *)switchOne andIndex:(NSInteger) index{
+    
+    if(switchOne  == nil){return nil;}
+    Byte by[16];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    self.en = 0;
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    
+    [self charEnableBitwith:(BOOL)(switchOne.onoff1 < 2 && switchOne.onoff1 >= 0) enNum:0x01 by:by num:6 propertyValue:switchOne.onoff1];
+    [self timerClockSettingWithEnNum:0x20 by:by num:7 month:switchOne.switchTimer1.sMonth day:switchOne.switchTimer1.sDay hour:switchOne.switchTimer1.sHour minutes:switchOne.switchTimer1.sMinutes];
+    [self timerClockSettingWithEnNum:0x40 by:by num:11 month:switchOne.switchTimer1.eMonth day:switchOne.switchTimer1.eDay hour:switchOne.switchTimer1.eHour minutes:switchOne.switchTimer1.eMinutes];
+    if (switchOne.switchTimer1.wf != -1 && switchOne.switchTimer1.wf < 0xff) {
+        self.en = 0x80;
+        by[15] = (Byte)(switchOne.switchTimer1.wf & 0xff);
+    }
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mData = [NSData dataWithBytes:by length:16];
+    return mData;
+}
+
+/**
+ *  二路开关
+ *  switchTwo  二路开关对象
+ */
+-(NSData *)switchTwoSetting:(HMSwitch *)switchTwo andIndex:(NSInteger) index{
+    
+    if(switchTwo  == nil){return nil;}
+    Byte by[25];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en = 0;
+    if ((switchTwo.onoff1 < 2 && switchTwo.onoff1 != -1) || (switchTwo.onoff2 < 2 && switchTwo.onoff2 != -1)) {
+        self.en = 0x01;
+        if (switchTwo.onoff1 != -1 ) {
+            by[6] =(Byte)(switchTwo.onoff1  & 0xff);
+        }
+        if (switchTwo.onoff2 != -1) {
+            by[6] +=(Byte)(switchTwo.onoff2  & 0xff) * 2;
+        }
+    }else{
+        by[6] = 0x00;
+    }
+     [self timerClockSettingWithEnNum:0x20 by:by num:7 month:switchTwo.switchTimer1.sMonth day:switchTwo.switchTimer1.sDay hour:switchTwo.switchTimer1.sHour minutes:switchTwo.switchTimer1.sMinutes];
+     [self timerClockSettingWithEnNum:0x40 by:by num:11 month:switchTwo.switchTimer1.eMonth day:switchTwo.switchTimer1.eDay hour:switchTwo.switchTimer1.eHour minutes:switchTwo.switchTimer1.eMinutes];
+    [self charEnableBitwith:(BOOL)(switchTwo.switchTimer1.wf != -1 && switchTwo.switchTimer1.wf < 0xff) enNum:0x80 by:by num:15 propertyValue:switchTwo.switchTimer1.wf];
+    
+    [self timerClockSettingWithEnNum:0x100 by:by num:16 month:switchTwo.switchTimer2.sMonth day:switchTwo.switchTimer2.sDay hour:switchTwo.switchTimer2.sHour minutes:switchTwo.switchTimer2.sMinutes];
+    [self timerClockSettingWithEnNum:0x200 by:by num:20 month:switchTwo.switchTimer2.eMonth day:switchTwo.switchTimer2.eDay hour:switchTwo.switchTimer2.eHour minutes:switchTwo.switchTimer2.eMinutes];
+    [self charEnableBitwith:(BOOL)(switchTwo.switchTimer2.wf != -1 && switchTwo.switchTimer2.wf < 0xff) enNum:0x400 by:by num:24 propertyValue:switchTwo.switchTimer2.wf];
+
+    by[4] = (Byte)((self.en>> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:25];
+    return mDatas;
+}
+
+/**
+ *  三路开关
+ *  switchThree  一路开关对象
+ */
+-(NSData *)switchThreeSetting:(HMSwitch *)switchThree andIndex:(NSInteger) index{
+    
+    if(switchThree  == nil){return nil;}
+    Byte by[30];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en = 0;
+    if ((switchThree.onoff1 < 2 && switchThree.onoff1 !=-1) || (switchThree.onoff2 < 2 && switchThree.onoff2 != -1) ||(switchThree.onoff3 < 2 &&  switchThree.onoff3 !=-1)) {
+        self.en = 0x01;
+        if (switchThree.onoff1 != -1) {
+            by[6] =(Byte)(switchThree.onoff1  & 0xff) ;
+        }
+        if (switchThree.onoff2 != -1) {
+            by[6] +=(Byte)(switchThree.onoff2  & 0xff) * 2;
+        }
+        if (switchThree.onoff3 != -1) {
+             by[6] +=(Byte)(switchThree.onoff3  & 0xff) * 4;
+        }
+    }else{
+        by[6] = 0x00;
+    }
+    [self charEnableBitwith:(BOOL)(switchThree.onoff1 < 2 &&switchThree.onoff1 != -1) enNum:0x01 by:by num:6 propertyValue:switchThree.onoff1];
+    [self timerClockSettingWithEnNum:0x20 by:by num:7 month:switchThree.switchTimer1.sMonth day:switchThree.switchTimer1.sDay hour:switchThree.switchTimer1.sHour minutes:switchThree.switchTimer1.sMinutes];
+    [self timerClockSettingWithEnNum:0x40 by:by num:11 month:switchThree.switchTimer1.eMonth day:switchThree.switchTimer1.eDay hour:switchThree.switchTimer1.eHour minutes:switchThree.switchTimer1.eMinutes];
+    [self charEnableBitwith:(BOOL)(switchThree.switchTimer1.wf != -1 && switchThree.switchTimer1.wf < 0xff) enNum:0x80 by:by num:15 propertyValue:switchThree.switchTimer1.wf];
+    
+    [self timerClockSettingWithEnNum:0x100 by:by num:16 month:switchThree.switchTimer2.sMonth day:switchThree.switchTimer2.sDay hour:switchThree.switchTimer2.sHour minutes:switchThree.switchTimer2.sMinutes];
+    [self timerClockSettingWithEnNum:0x200 by:by num:20 month:switchThree.switchTimer2.eMonth day:switchThree.switchTimer2.eDay hour:switchThree.switchTimer2.eHour minutes:switchThree.switchTimer2.eMinutes];
+    [self charEnableBitwith:(BOOL)(switchThree.switchTimer2.wf != -1 && switchThree.switchTimer2.wf < 0xff) enNum:0x400 by:by num:24 propertyValue:switchThree.switchTimer2.wf];
+
+    [self timerClockSettingWithEnNum:0x800 by:by num:25 month:switchThree.switchTimer3.sMonth day:switchThree.switchTimer3.sDay hour:switchThree.switchTimer3.sHour minutes:switchThree.switchTimer3.sMinutes];
+    [self timerClockSettingWithEnNum:0x1000 by:by num:29 month:switchThree.switchTimer3.eMonth day:switchThree.switchTimer3.eDay hour:switchThree.switchTimer3.eHour minutes:switchThree.switchTimer3.eMinutes];
+    [self charEnableBitwith:(BOOL)(switchThree.switchTimer3.wf != -1 && switchThree.switchTimer3.wf < 0xff) enNum:0x2000 by:by num:33 propertyValue:switchThree.switchTimer3.wf];
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:33];
+    return mDatas;
+}
+
+/**
+ * 四驱灯控
+ * fourLight 对象
+ */
+-(NSData *)fourLightSetting:(HMFourLight *)fourLight andIndex:(NSInteger) index{
+   
+    if(fourLight == nil){return nil;}
+    Byte by[46];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en= 0;
+    if ((fourLight.onoff1 < 2 && fourLight.onoff1 != -1) ||
+        (fourLight.onoff2 < 2 && fourLight.onoff2 != -1) ||
+        (fourLight.onoff3 < 2 && fourLight.onoff3 != -1) ||
+        (fourLight.onoff4 < 2 && fourLight.onoff4  != -1)) {
+        self.en = 0x01;
+        if (fourLight.onoff4 != -1) {
+            by[6] =(Byte)(fourLight.onoff4 & 0xff);
+        }
+        if (fourLight.onoff3 != -1) {
+            by[6] +=(Byte)(fourLight.onoff3 & 0xff) * 2;
+        }
+        if (fourLight.onoff2 != -1) {
+            by[6] +=(Byte)(fourLight.onoff2 & 0xff) * 4;
+        }
+        if (fourLight.onoff1 != -1) {
+            by[6] +=(Byte)(fourLight.onoff1 & 0xff) * 8;
+        }
+    }else{
+        by[6] = 0x00;
+    }
+    if ((fourLight.brightness1 < 101 && fourLight.brightness1 != -1)|| (fourLight.brightness2 < 101 && fourLight.brightness2 != -1)|| (fourLight.brightness3 < 101 && fourLight.brightness3 != -1)||  (fourLight.brightness4 < 101 && fourLight.brightness4 != -1)){
+        self.en += 0x02;
+        if (fourLight.brightness1 != -1) {
+            by[10] =(Byte)(fourLight.brightness1  & 0xff);
+        }
+        if (fourLight.brightness2 != -1) {
+            by[9] =(Byte)(fourLight.brightness2  & 0xff);
+        }
+        if (fourLight.brightness3 != -1) {
+            by[8] =(Byte)(fourLight.brightness3  & 0xff);
+        }
+        if (fourLight.brightness4 != -1) {
+            by[7] =(Byte)(fourLight.brightness4  & 0xff);
+        }
+    }else{
+        by[7] = 0xff;
+        by[8] = 0xff;
+        by[9] = 0xff;
+        by[10] = 0xff;
+    }
+    if ((fourLight.cwl1 < 10 && fourLight.cwl1 != -1) ||
+        (fourLight.cwl2 < 10 && fourLight.cwl2 != -1) ||
+        (fourLight.cwl3 < 10 && fourLight.cwl3 != -1) ||
+        (fourLight.cwl4 < 10 && fourLight.cwl4 != -1)) {
+            self.en += 0x04;
+            if (fourLight.cwl1 != -1) {
+                by[12] = (Byte)(fourLight.cwl1 & 0xff) ;
+            }
+            if (fourLight.cwl2 != -1) {
+                by[12] += (Byte)(fourLight.cwl2  & 0xff) * 16;
+            }
+            if (fourLight.cwl3 != -1) {
+                by[11] += (Byte)(fourLight.cwl3  & 0xff) ;
+            }
+            if (fourLight.cwl4 != -1) {
+                by[11] += (Byte)(fourLight.cwl4  & 0xff) * 16;
+            }
+    }else{
+        by[11] = 0xff;
+        by[12] = 0xff;
+    }
+    [self timerClockSettingWithEnNum:0x08 by:by num:13 month:fourLight.flTimer1.sMonth day:fourLight.flTimer1.sDay hour:fourLight.flTimer1.sHour minutes:fourLight.flTimer1.sMinutes];
+    [self timerClockSettingWithEnNum:0x10 by:by num:17 month:fourLight.flTimer1.eMonth day:fourLight.flTimer1.eDay hour:fourLight.flTimer1.eHour minutes:fourLight.flTimer1.eMinutes];
+    [self charEnableBitwith:(BOOL)(fourLight.flTimer1.wf != -1) enNum:0x20 by:by num:21 propertyValue:fourLight.flTimer1.wf];
+    
+    [self timerClockSettingWithEnNum:0x40 by:by num:22 month:fourLight.flTimer2.sMonth day:fourLight.flTimer2.sDay hour:fourLight.flTimer2.sHour minutes:fourLight.flTimer2.sMinutes];
+    [self timerClockSettingWithEnNum:0x80 by:by num:26 month:fourLight.flTimer2.eMonth day:fourLight.flTimer2.eDay hour:fourLight.flTimer2.eHour minutes:fourLight.flTimer2.eMinutes];
+    [self charEnableBitwith:(BOOL)(fourLight.flTimer2.wf != -1) enNum:0x100 by:by num:30 propertyValue:fourLight.flTimer2.wf];
+
+    [self timerClockSettingWithEnNum:0x200 by:by num:31 month:fourLight.flTimer3.sMonth day:fourLight.flTimer3.sDay hour:fourLight.flTimer3.sHour minutes:fourLight.flTimer3.sMinutes];
+    [self timerClockSettingWithEnNum:0x4000 by:by num:35 month:fourLight.flTimer3.eMonth day:fourLight.flTimer3.eDay hour:fourLight.flTimer3.eHour minutes:fourLight.flTimer3.eMinutes];
+    [self charEnableBitwith:(BOOL)(fourLight.flTimer3.wf != -1) enNum:0x8000 by:by num:39 propertyValue:fourLight.flTimer3.wf];
+    
+    [self timerClockSettingWithEnNum:0x200 by:by num:40 month:fourLight.flTimer4.sMonth day:fourLight.flTimer4.sDay hour:fourLight.flTimer4.sHour minutes:fourLight.flTimer4.sMinutes];
+    [self timerClockSettingWithEnNum:0x4000 by:by num:44 month:fourLight.flTimer4.eMonth day:fourLight.flTimer4.eDay hour:fourLight.flTimer4.eHour minutes:fourLight.flTimer4.eMinutes];
+    [self charEnableBitwith:(BOOL)(fourLight.flTimer4.wf != -1) enNum:0x8000 by:by num:48 propertyValue:fourLight.flTimer4.wf];
+    
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:49];
+    return mDatas;
+}
+
+/**
+ * 声光警号
+ * rgbLight 对象
+ */
+
+-(NSData *)soundAndLightAlarmSetting:(HMSoundAndLightAlarm *)soundAndLightAlarm andIndex:(NSInteger) index{
+   
+    if (soundAndLightAlarm == nil) {return nil;}
+    self.en = 0;
+    Byte by[11];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    [self charEnableBitwith:(BOOL)(soundAndLightAlarm.slOnoff < 2 && soundAndLightAlarm.slOnoff != -1) enNum:0x01 by:by num:6 propertyValue:soundAndLightAlarm.slOnoff];
+    if (soundAndLightAlarm.slAlarmTime) {
+        self.en += 0x01;
+        by[7]  = (Byte)(soundAndLightAlarm.slAlarmTime >> 24 & 0xff);
+        by[8]  = (Byte)(soundAndLightAlarm.slAlarmTime >> 16 & 0xff);
+        by[9]  = (Byte)(soundAndLightAlarm.slAlarmTime >> 8  & 0xff);
+        by[10] = (Byte)(soundAndLightAlarm.slAlarmTime       & 0xff);
+    }else{
+        by[7] = 0xff;
+        by[8] = 0xff;
+        by[9] = 0xff;
+        by[10] = 0xff;
+    }
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:11];
+    return mDatas;
+}
+    
+
+/**
+ * RGb灯
+ * rgbLight 对象
+ */
+-(NSData *)RGBLightSetting:(HMRgbLight *)rgbLight andIndex:(NSInteger) index{
+   
+    if(rgbLight == nil){return nil;}
+    Byte by[23];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en = 0;
+    [self charEnableBitwith:(BOOL)(rgbLight.rgbOnOff >= 0 && rgbLight.rgbOnOff < 2) enNum:0x01 by:by num:6 propertyValue:rgbLight.rgbOnOff];
+    [self charEnableBitwith:(BOOL)(rgbLight.brightness  >= 0 && rgbLight.brightness <= 100) enNum:0x02 by:by num:7 propertyValue:rgbLight.brightness];
+    [self shortEnableBitwith:(BOOL)(rgbLight.colorR >= 0 && rgbLight.colorR <= 255) enNum:0x04 by:by num:8 propertyValue:rgbLight.colorR];
+    [self shortEnableBitwith:(BOOL)(rgbLight.colorG >= 0 && rgbLight.colorG <= 255) enNum:0x08 by:by num:10 propertyValue:rgbLight.colorG];
+    [self shortEnableBitwith:(BOOL)(rgbLight.colorB >= 0 && rgbLight.colorB <= 255) enNum:0x10 by:by num:12 propertyValue:rgbLight.colorB];
+    [self timerClockSettingWithEnNum:0x20 by:by num:14 month:rgbLight.rgbTimer.sMonth day:rgbLight.rgbTimer.sDay hour:rgbLight.rgbTimer.sHour minutes:rgbLight.rgbTimer.sMinutes];
+    [self timerClockSettingWithEnNum:0x40 by:by num:18 month:rgbLight.rgbTimer.eMonth day:rgbLight.rgbTimer.eDay hour:rgbLight.rgbTimer.eHour minutes:rgbLight.rgbTimer.eMinutes];
+    [self charEnableBitwith:(BOOL)(rgbLight.rgbTimer.wf != -1) enNum:0x80 by:by num:22 propertyValue:rgbLight.rgbTimer.wf];
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en>> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:23];
+    return mDatas;
+}
+
+/**
+ * 温湿度
+ * thp对象
+ */
+-(NSData *)thpSetting:(HMThp *)thp andIndex:(NSInteger) index{
+    
+    if (thp == nil) {return nil;}
+    Byte by[15];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en = 0;
+    [self shortEnableBitwith:(BOOL)(thp.humUp != -1) enNum:0x01 by:by num:6 propertyValue:thp.humUp];
+    [self shortEnableBitwith:(BOOL)(thp.humLow != -1) enNum:0x02 by:by num:8 propertyValue:thp.humLow];
+    [self shortEnableBitwith:(BOOL)(thp.temUp != -1) enNum:0x04 by:by num:10 propertyValue:thp.temUp];
+    [self shortEnableBitwith:(BOOL)(thp.temLow != -1) enNum:0x08 by:by num:12 propertyValue:thp.temLow];
+    
+    by[14] = 0x10;
+    if (thp.humEnbale) {
+        by[14] = 0x0f;
+    }
+    if (thp.tempEnbale) {
+        by[14] += 0xf0;
+    }
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:15];
+    return mDatas;
+}
+
+/**
+ *  计量插座
+ *  metringPlug  计量插座对象
+ */
+-(NSData *)metringPlugSetting:(HMMetringPlug *)metringPlug andIndex:(NSInteger) index{
+    
+    if(metringPlug  == nil){return nil;}
+    Byte by[16];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en = 0;
+    [self charEnableBitwith:(BOOL)(metringPlug. metOnoff < 2 &&  metringPlug. metOnoff >= 0) enNum:0x01 by:by num:6 propertyValue:metringPlug. metOnoff];
+    [self timerClockSettingWithEnNum:0x20 by:by num:7 month:metringPlug.metTimer.sMonth day:metringPlug.metTimer.sDay hour:metringPlug.metTimer.sHour minutes:metringPlug.metTimer.sMinutes];
+    [self timerClockSettingWithEnNum:0x40 by:by num:11 month:metringPlug.metTimer.eMonth day:metringPlug.metTimer.eDay hour:metringPlug.metTimer.eHour minutes:metringPlug.metTimer.eMinutes];
+    if (metringPlug.metTimer.wf >= 0) {
+        self.en = 0x80;
+        by[15] = (Byte)(metringPlug.metTimer.wf  & 0xff);
+    }else{
+        by[15] = 0xff;
+    }
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:16];
+    return mDatas;
+}
+
+/**
+ * 智能插座
+ */
+-(NSData *)plugSetting:(HMPlug *)plug andIndex:(NSInteger) index{
+    
+    if(plug == nil){return nil;}
+    Byte by[26];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    self.en = 0;
+    [self charEnableBitwith:(BOOL)(plug.powerOnoff < 2 && plug.powerOnoff >= 0) enNum:0x01 by:by num:6 propertyValue:plug.usbOnoff];
+    [self timerClockSettingWithEnNum:0x20 by:by num:7 month:plug.powerTimer.sMonth day:plug.powerTimer.sDay hour:plug.powerTimer.sHour minutes:plug.powerTimer.sMinutes];
+    [self timerClockSettingWithEnNum:0x40 by:by num:11 month:plug.powerTimer.eMonth day:plug.powerTimer.eDay hour:plug.powerTimer.eHour minutes:plug.powerTimer.eMinutes];
+    [self charEnableBitwith:(BOOL)(plug.powerTimer.wf >= 0) enNum:0x80 by:by num:15 propertyValue:plug.powerTimer.wf];
+    
+    [self charEnableBitwith:(BOOL)(plug.usbOnoff < 2 && plug.usbOnoff >= 0) enNum:0x10 by:by num:16 propertyValue:plug.usbOnoff];
+    [self timerClockSettingWithEnNum:0x20 by:by num:17 month:plug.usbTimer.sMonth day:plug.usbTimer.sDay
+                             hour:plug.usbTimer.sHour minutes:plug.usbTimer.sMinutes];
+    [self timerClockSettingWithEnNum:0x40 by:by num:21 month:plug.usbTimer.eMonth day:plug.usbTimer.eDay
+                             hour:plug.usbTimer.eHour minutes:plug.usbTimer.eMinutes];
+    [self charEnableBitwith:(BOOL)(plug.usbTimer.wf >= 0) enNum:0x80 by:by num:25 propertyValue:plug.usbTimer.wf];
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:26];
+    
+    return  mDatas;
+}
+
+/**
+ * 继电器
+ * MagneticDoor对象
+ */
+-(NSData *)relaySetting:(HMRelay *)relay andIndex:(NSInteger) index{
+    
+    if (relay == nil) {return nil;}
+    self.en = 0;
+    Byte by[7];
+    Byte data[] = {0xff,0xff};
+    by[0] = data[0];
+    by[1] = data[1];
+    by[2] = (Byte)((index >> 8) & 0xff);
+    by[3] = (Byte)((index >> 0) & 0xff);
+    [self charEnableBitwith:(BOOL)(relay.relayOnoff < 2 && relay.relayOnoff != -1) enNum:0x01 by:by num:6 propertyValue:relay.relayOnoff];
+    by[4] = (Byte)((self.en >> 8) & 0xff);
+    by[5] = (Byte)((self.en >> 0) & 0xff);
+    NSData *mDatas = [NSData dataWithBytes:by length:7];
+    return mDatas;
+}
+
+/**
+ * 温控器
+ * thermostat对象
+ */
+-(NSData *)thermostatSetting:(HMThermostat *)thermostat andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 窗帘电机
+ * CurtainController对象
+ */
+-(NSData *)curtainControllerSetting:(HMCurtainController *)curtainController andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 振动器
+ * shock对象
+ */
+-(NSData *)shockSetting:(HMShock *)shock andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+/**
+ * 空气
+ * air对象
+ */
+-(NSData *)airSetting:(HMAir *)air andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 光照
+ * illuminance对象
+ */
+-(NSData *)illuminanceSetting:(HMIlluminance *) illuminance andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+/**
+ * 灯头
+ * lampHeader对象
+ */
+-(NSData *)lampHeaderSetting:(HMLampHeader *) lampHeader andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+/**
+ * 门磁
+ * MagneticDoor对象
+ */
+-(NSData *)magneticDoorSetting:(HMMagneticDoor *)MagneticDoor andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+/**
+ * 水浸
+ * WaterLeach对象
+ */
+-(NSData *)waterLeachSetting:(HMWaterLeach *)WaterLeach andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 红外
+ * pir对象
+ */
+-(NSData *)pirSetting:(HMPir *)pir andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 烟雾
+ * smoke对象
+ */
+-(NSData *)smokeSetting:(HMSmoke *)pir andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 气感
+ * gas对象
+ */
+-(NSData *)gasSetting:(HMGas *)gas andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 一氧化碳
+ * co对象
+ */
+-(NSData *)coSetting:(HMCo *)co andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * sos报警器
+ * sos对象
+ */
+-(NSData *)sosSetting:(HMSos *)sos andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+/**
+ * 遥控器
+ * sw对象
+ */
+-(NSData *)swSetting:(HMSw *)sw andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+///**
+// * 计量插座
+// * MetrtingPlug对象
+// */
+//-(NSData *)metrtingPlugSetting:(HMMetringPlug *)metrtingPlug andIndex:(NSInteger) index{
+//
+//    Byte data[] = {};
+//    return  [NSData dataWithBytes:data length:0];
+//}
+/**
+ * 红外遥控转发器
+ * rfirControll对象
+ */
+-(NSData *)rfirControllSetting:(HMRfirControll *)rfirControll andIndex:(NSInteger) index{
+    
+    Byte data[] = {};
+    return  [NSData dataWithBytes:data length:0];
+}
+
+
+/**
+ *  计时器
+ *  en:使能位数，enNum:使能增加位数， by:byte数组 num：byte数组的位 month：月 day：日 hour：时 mintues：分
+ */
+-(void)timerClockSettingWithEnNum:(NSInteger)enNum  by:(Byte*)by num:(NSInteger)num month:(NSInteger)month day:(NSInteger)day hour:(NSInteger)hour minutes:(NSInteger)minutes {
+    Byte data[2]  = {0xff,0xff};
+    if (month != -1  || day  != -1|| hour != -1 || minutes != -1) {
+         self.en += enNum;
+        if (month <= 12 && month >= 1) {
+            by[num]  = (Byte)(month & 0xff);
+        }else{
+            by[num]  = data[0];
+        }
+        if (day <= 31 && day >= 0) {
+            by[num+1]  = (Byte)(day  & 0xff);
+        }else{
+            by[num+1]  = data[0];
+        }
+        if (hour >= 0 && hour < 24) {
+            by[num+2]  = (Byte)(hour  & 0xff);
+        }else{
+            by[num+2]  = data[0];
+        }
+        if (minutes < 60 && minutes >= 0) {
+            by[num+3]  = (Byte)(minutes & 0xff);
+        }else{
+            by[num+3]  = data[0];
+        }
+    }else{
+        by[num]    = data[0];
+        by[num+1]  = data[1];
+        by[num+2]  = data[0];
+        by[num+3]  = data[1];
+    }
+}
+
+/**
+ *  使能位的判断或开关等char类型字节
+ *  boolJudgment:使能判断，enNum:使能增加位数， by:byte数组 num：byte数组的位 propertyValue：属性值
+ */
+-(void)charEnableBitwith:(BOOL)boolJudgment enNum:(NSInteger)enNum by:(Byte*)by num:(NSInteger)num propertyValue:(NSInteger)propertyValue{
+    if (boolJudgment) {
+        self.en += enNum;
+        by[num] = (Byte)(propertyValue  & 0xff);
+    }else{
+        by[num] = 0xff;
+    }
+}
+
+/**
+ *  使能位的判断或开关等short类型字节
+ *  boolJudgment:使能判断，enNum:使能增加位数， by:byte数组 num：byte数组的位 propertyValue：属性值
+ */
+-(void)shortEnableBitwith:(BOOL)boolJudgment enNum:(NSInteger)enNum by:(Byte*)by num:(NSInteger)num propertyValue:(NSInteger)propertyValue{
+    Byte data[]  = {0xff,0xff};
+    if (boolJudgment) {
+        self.en += enNum;
+        by[num] = (Byte)((propertyValue >> 8) & 0xff);
+        by[num+1] = (Byte)((propertyValue >> 0) & 0xff);
+    }else{
+        by[num]   = data[0];
+        by[num+1] = data[1];
+    }
+}
+/**
+ 基础方法
+ */
+-(NSData *)setBaseGateway:(NSInteger) cmd
+                     data:(NSData *) data
+                   device:(HMDevice *)device{
+    NSData *mData =  [[NSData alloc] init];
+    HmBaseInfoModel *hmBaseInfoModel = [[HmBaseInfoModel alloc] init];
+    hmBaseInfoModel.cmd = cmd;
+    hmBaseInfoModel.data = data;
+    hmBaseInfoModel.DestinationID =0xFFF2;
+    hmBaseInfoModel.InfoType = 0x3000;
+    hmBaseInfoModel.len = [data length];
+    hmBaseInfoModel.sn = 0x0001;
+    hmBaseInfoModel.sourceID = 0x3021;
+    mData = [hmBaseInfoModel toModelByte];
+//    <3000fff2 30210001 30080017 ffff2b60 001d01ff 000100fe 0002ffff ffffffff ffffff>
+    return [self hmEncoderWithHmDevice:device andData:mData];
+}
+
+-(NSData *)hmEncoderWithHmDevice:(HMDevice *)hmDevice andData:(NSData *)data{
+    
+    HMBaseTLV * baseTLV = [[HMBaseTLV alloc]init];
+    baseTLV.action =  (ACTION_TYPE) ACTION_CONTROL;
+    baseTLV.encrptType =  0 ;
+    NSData * encrptData = [NSData data];
+    if (hmDevice != nil && data != nil) {
+        if ([HmUtils isEmptyString: hmDevice.aeskey] == YES && [HmUtils isEmptyString: hmDevice.acckey] == NO) {
+            baseTLV.encrptType = 1;//公钥加密
+            NSData *keyData = [hmDevice.acckey dataUsingEncoding:NSUTF8StringEncoding];
+            encrptData = [HmEncrypt aesEncrypt:data key:keyData blackLen:(int)data.length];
+        }else if (![HmUtils isEmptyString: hmDevice.aeskey]) {
+            baseTLV.encrptType = 2;//秘钥加密
+            NSData *keyData = [hmDevice.aeskey dataUsingEncoding:NSUTF8StringEncoding];
+            encrptData = [HmEncrypt aesEncrypt:data key:keyData blackLen:(int)data.length];
+        }else{
+            baseTLV.encrptType = 0;//不加密
+            encrptData = data;
+        }
+    }
+    Byte by[7 + encrptData .length];
+    by[0] = (Byte)(DATA_TYPE_ACTION & 0xff);
+    by[1] = (Byte)(baseTLV.action & 0xff);
+    by[2] = (Byte)(DATA_TYPE_ENCRYPT_TYPE & 0xff);
+    by[3] = (Byte)(baseTLV.encrptType & 0xff);
+    by[4] = (Byte)(DATA_TYPE_PASS & 0xff);
+    by[5] = (Byte)(data.length >> 8 & 0xff);
+    by[6] = (Byte)(data.length >> 0 & 0xff);
+    
+    Byte   * byteData = (Byte *)[encrptData bytes];
+    for (int i = 0; i < encrptData.length; i++) {
+        by[i + 7] = byteData[i];
+    }
+    
+    NSData * mDatas = [NSData dataWithBytes:by length:7 + encrptData.length];
+    return mDatas;
+}
+//
+//-(Byte *)fooByte{
+//    Byte by[] = {0xff,0xff};
+//    Byte * b = (Byte *)malloc(2);
+//    memcpy(b, by, 2);
+//    return b;
+//}
+@end

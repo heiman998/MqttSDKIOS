@@ -1,0 +1,21 @@
+//
+//  HMSSBase.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/8.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import "HMSSBase.h"
+
+@implementation HMSSBase
+
++ (instancetype)fourLightWithDict:(NSDictionary *)dict
+{
+    HMSSBase *model = [[HMSSBase alloc] init];
+    [model setValuesForKeysWithDictionary:dict];
+    return model;
+}
+
+
+@end

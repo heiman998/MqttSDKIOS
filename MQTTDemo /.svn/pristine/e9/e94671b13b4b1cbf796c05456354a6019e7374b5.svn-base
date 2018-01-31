@@ -1,0 +1,36 @@
+//
+//  HMHttpConstant.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/22.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import "HMHttpConstant.h"
+
+
+
+int const ERROR_434626 = 434626;
+int const ERROR_434627 = 434627;
+int const ERROR_434628 = 434628;
+int const ERROR_434629 = 434629;
+int const ERROR_434630 = 434630;
+int const ERROR_434631 = 434631;
+int const ERROR_434632 = 434632;
+int const ERROR_434633 = 434633;
+int const ERROR_434634 = 434634;
+int const ERROR_434635 = 434635;
+int const ERROR_434636 = 434636;
+int const ERROR_434637 = 434637;
+int const ERROR_434638 = 434638;
+int const ERROR_434639 = 434639;
+int const ERROR_434640 = 434640;
+int const ERROR_434641 = 434641;
+int const ERROR_434642 = 434642;
+int const ERROR_434643 = 434643;
+int const ERROR_434644 = 434644;
+int const ERROR_434645 = 434645;
+int const ERROR_434646 = 434646;
+int const SUCCESS = 200;
+
+

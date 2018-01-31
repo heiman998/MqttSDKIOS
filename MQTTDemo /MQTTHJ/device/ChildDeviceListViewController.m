@@ -1,0 +1,106 @@
+//
+//  ChildDeviceListViewController.m
+//  MQTTHJ
+//
+//  Created by 研发ios工程师 on 2018/1/2.
+//  Copyright © 2018年 研发ios工程师. All rights reserved.
+//
+
+#import "ChildDeviceListViewController.h"
+
+@interface ChildDeviceListViewController () <UITableViewDelegate,UITableViewDataSource>
+
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
+
+@property (nonatomic, strong) NSString *  dString;
+
+@property (nonatomic, assign) NSInteger  listCount;
+
+@property (nonatomic, strong) NSArray * listArr;
+
+@property (nonatomic, strong)NSString * macName;
+
+@end
+
+@implementation ChildDeviceListViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.listArr = [NSArray array];
+    self.dString = [NSString string];
+    self.tableView.tableFooterView = [[UIView alloc]initWithFrame:CGRectZero];
+    self.automaticallyAdjustsScrollViewInsets = false;
+}
+
+- (void)configureWithData:(id)data {
+    self.dString = [data valueForKey:@"id"];
+    self.macName = [data valueForKey:@"mac"];
+    [self getDeviceListFromNet];
+}
+#pragma mark 用户子设备列表
+- (void)getDeviceListFromNet{
+    [HMHttpManage getSubDevicesWithOffset:nil limit:nil andDeviceId:self.dString success:^(id data) {
+     NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+      self.listCount = [[dic valueForKey:@"count"] integerValue];
+      if (self.listCount > 0) {
+         self.listArr = [dic valueForKey:@"list"];
+          NSMutableArray * muArr = [NSMutableArray array];
+          for (int i = 0; i < self.listArr.count; i++) {
+              NSDictionary * dict = self.listArr[i];
+              
+//注意：  一定要存储子设备相关信息，用于编解码的时候调用 否则不能返回信息
+              HMSubDevice * deviceModel = [[HMSubDevice alloc]initWithDeviceMac: dict[@"mac"] deviceType:[dict[@"productId"] integerValue] index:[dict[@"subIndex"] integerValue] deviceName:dict[@"name"]];
+              [muArr addObject:deviceModel];
+          }
+          [HMSubDeviceManage saveSubDeviceInUserDefaultsWithArray:muArr];
+      }else{self.listCount = 0;}
+      NSLog(@"%@",dic);
+      [self.tableView reloadData];
+    } failure:^(NSError *error) {
+        NSLog(@"error:%@",error.description);
+    }];
+}
+
+
+#pragma mark - Table view data source
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 80;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    if (self.listCount == 0) {return 1;}
+    return self.listCount;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UITableViewCell * cell= [tableView dequeueReusableCellWithIdentifier:@"ChildCell"];
+    if(!cell) {
+        cell = [[UITableViewCell  alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"ChildCell"];
+    }
+    if (self.listCount == 0) {
+        cell.textLabel.text = [NSString stringWithFormat:@"%@ : 暂无子设备",self.dString];
+    }else{
+        NSDictionary * dict = self.listArr[indexPath.row];
+        cell.textLabel.text = [NSString stringWithFormat:@"id : %@  mac: %@",dict[@"id"],dict[@"mac"]];
+        NSString * detailText = [NSString stringWithFormat:@" productId:%@  isOnline:%@ subIndex:%@\n lastData:%@  name:%@ ",dict[@"productId"],dict[@"isOnline"],dict[@"subIndex"],dict[@"lastData"],dict[@"name"]];
+        cell.detailTextLabel.text = detailText;
+        cell.detailTextLabel.numberOfLines = 0;
+    }
+    return cell;
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    if (self.listCount > 0) {
+         NSDictionary * dict = self.listArr[indexPath.row];
+         NSDictionary * dic  =@{@"dict":dict,@"wifiMacName":self.macName};
+         [self performSegueWithIdentifier:@"SubDevice" sender:dic];
+    }else{
+        NSLog(@"暂无子设备");
+    }
+}
+
+
+
+@end

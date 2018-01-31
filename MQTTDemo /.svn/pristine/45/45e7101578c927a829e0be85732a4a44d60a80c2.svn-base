@@ -1,0 +1,21 @@
+//
+//  HMDevice.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/6.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import "HMDevice.h"
+
+@implementation HMDevice
+
++ (instancetype)hmDeviceWithDict:(NSDictionary *)dict
+{
+    HMDevice *model = [[HMDevice alloc] init];
+    [model setValuesForKeysWithDictionary:dict];
+    return model;
+}
+
+
+@end

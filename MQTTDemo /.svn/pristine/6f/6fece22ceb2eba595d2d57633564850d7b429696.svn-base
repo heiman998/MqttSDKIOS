@@ -1,0 +1,115 @@
+//
+//  HMMQTTSdkEncoder.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/11/30.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "Enum.h"
+#import "HMGatewayInfo.h"
+#import "HMRgbLight.h"
+#import "HMMagneticDoor.h"
+#import "HMWaterLeach.h"
+#import "HMPir.h"
+#import "HMSmoke.h"
+#import "HMGas.h"
+#import "HMCo.h"
+#import "HMSos.h"
+#import "HMSw.h"
+#import "HMPlug.h"
+#import "HMMetrtingPlug.h"
+#import "HMSwitch.h"
+#import "HMRfirControll.h"
+#import "HMRelay.h"
+#import "HMLampHeader.h"
+#import "HMFourLight.h"
+#import "HMSoundAndLightAlarm.h"
+#import "HMIlluminance.h"
+#import "HMAir.h"
+#import "HMThermostat.h"
+#import "HMShock.h"
+#import "HMCurtainController.h"
+#import "HMThp.h"
+#import "HMMetringPlug.h"
+#import "HMDevice.h"
+
+@interface HMMQTTSdkEncoder : NSObject
+
+/**
+ 获取获取设备版本信息方法
+ @param  device 设备属性
+ @return 版本数据
+ */
+-(NSData *) getEditionDataWithDevice:(HMDevice *)device;
+
+/**
+ 获取网关参数信息
+ @param device 设备属性
+ @return 获取网关数据
+ */
+-(NSData *) getGatewayInfoWithDevice:(HMDevice *)device;
+/**
+ 设置时区方法
+ @param  timerZone 时区信息 device 设备属性
+ @return 时区数据
+ */
+
+-(NSData *)setTimerZone:(NSString *) timerZone andDevice:(HMDevice *)device;
+
+/**
+ 设置网关参数信息
+ @param  gatewayInfo 网关参数模型 device 设备属性
+ @return 网关参数数据
+ */
+-(NSData *)setGatewayInfo:(HMGatewayInfo *)gatewayInfo andDevice:(HMDevice *)device;
+
+/**
+ 获取秘钥
+ @return 返回秘钥编码
+ */
+-(NSData *) getSecretKeyWithDevice:(HMDevice *)device;
+
+/**
+ * 设置网关ip
+ * @param device 网关设备
+ * @param ip       设备ip地址
+ * @return 设置网关ip信息
+ */
+-(NSData *)setDeviceIPwithIP:(NSString *)ip andDevice:(HMDevice *)device;
+
+/**
+ * 添加设备
+ * 使能设备加网  0x30表示退出入网模式,0x31表示进入入网模式；
+ * @param enable 0为允许，1为不允许 device 设备属性
+ * @return 添加设备入网 或者 退网数据
+ */
+-(NSData *)addSubDevice:(Boolean) enable andDevice:(HMDevice *)device;
+
+/**
+ * 删除子设备
+ * @param index 设备索引 device 设备属性
+ * @return 删除设备数据
+ */
+-(NSData *)deleteSubDevice:(NSInteger) index andDevice:(HMDevice *)device;
+
+/**
+ * 固件升级
+ * @param fType  值0x01,为wifi固件；值0x02,为ZigBee协调器固件；值0x03,为ZigBee子设备固件；值0x04,为声音升级。
+ * @param enable 2表示允许更新，否则不允许更新 device 设备属性
+ * @param type   设备类型当升级设备类型为zigbee子设备有时效。
+ * @return 固件升级信息
+ */
+-(NSData *) upDatairmware:(NSInteger) fType enable:(Boolean)enable type:(NSInteger)type andDevice:(HMDevice *)device;
+
+/**
+ * 设置子设备属性
+ * @param type   设备类型 参考:Enum.h 文件
+ * @param index  设备索引 device 设备属性
+ * @param object 设备信息 ：子设备的各项属性，参考model
+ * @return   子设备属性数据
+ */
+-(NSData *)setDevicePropertyWithIndex:(DEVICE_TYPE)type deviceIndex:(NSInteger)index deviceInfo:(NSObject *) object andDevice:(HMDevice *)device;
+
+@end

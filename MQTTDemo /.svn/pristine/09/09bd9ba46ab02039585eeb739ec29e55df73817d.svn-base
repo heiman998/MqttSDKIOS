@@ -1,0 +1,2356 @@
+
+
+//  HMMQTTSdkDecoder.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/16.
+//  Copyright © 2017年 mac. All rights reserved.
+//#define Text(v) {0xFF ,0xFF,(Byte)((v >> 8) $ 0xFF),(Byte)(v $ 0xFF)}
+//#define Text(v) {0xFF ,0xFF,(Byte)((v >> 8) $ 0xFF),(Byte)(v $ 0xFF)}
+
+#import "HMMQTTSdkDecoder.h"
+#import "HMBaseTLV.h"
+#import "HmUtils.h"
+#import "HmEncrypt.h"
+#import "HMSubDevice.h"
+#import "HMMQTTSdkEncoder.h"
+#import "HMSubDeviceManage.h"
+#import "Enum.h"
+#import "HMSSBase.h"
+
+@implementation HMMQTTSdkDecoder
+
+#pragma mark 解码入口
+
+//解码入口
+-(void)baseDecoderWith:(HMDevice *)hmDevice andData:(NSData *)data successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    if (data.length < 5) {return;}
+    Byte by[data.length];
+    Byte * byteData = (Byte *)[data bytes];
+    Byte pass[data.length - 7];
+    HMBaseTLV * baseTLV = [[HMBaseTLV alloc]init];
+    for(int i=0 ; i < data.length ; i++){
+        by[i] = byteData[i];
+    }
+    for (int i = 7; i < data.length; i++) {
+        pass[i - 7] = byteData[i];
+    }
+    NSData *encryData = [data subdataWithRange:NSMakeRange(7, (data.length - 7))];
+    baseTLV.pass = pass;
+    baseTLV.action = by[1] & 0xff;
+    baseTLV.encrptType = by[3] & 0xff;
+    Byte lengthbyte[2];
+    lengthbyte[0] = by[5];
+    lengthbyte[1] = by[6];
+    int len1 = (lengthbyte[0] & 0xff) << 8 | ( lengthbyte[1] & 0xff);
+    NSData * dataPass  = [NSData dataWithBytes:pass length: data.length - 7];
+//公私钥解密
+    if (baseTLV.encrptType == 1) {
+        if (hmDevice.acckey) {
+            NSData * keyData = [hmDevice.acckey dataUsingEncoding:NSUTF8StringEncoding];
+            NSData *decryptData = [HmEncrypt aesDecrypt:encryData key:keyData blackLen:len1];
+            NSLog(@"%@",decryptData);
+            Byte * accData = (Byte *)[decryptData bytes];
+            for(int i=0 ; i < decryptData.length ; i++){
+                baseTLV.pass[i] = accData[i];
+            }
+        }else{return;}
+    }else if (baseTLV.encrptType == 2){
+        if (hmDevice.aeskey) {
+            NSData * keyData = [hmDevice.aeskey dataUsingEncoding:NSUTF8StringEncoding];
+            NSData * decryptData = [HmEncrypt aesDecrypt:encryData key:keyData blackLen:len1];
+            Byte * aesData = (Byte *)[decryptData bytes];
+            for(int i=0 ; i < dataPass.length ; i++){
+                baseTLV.pass[i] = aesData[i];
+            }            
+        }else{return ;}
+    }
+    Byte cmdData[2];
+    Byte lengthData[2];
+    Byte rcData[2];
+    switch (baseTLV.action) {
+        case CONTROL:
+            break;
+        case REPORT :
+            break;
+        case CONTROL_ACK:
+          { cmdData[0] = baseTLV.pass[8];
+            cmdData[1] = baseTLV.pass[9];
+            NSInteger cmd = (cmdData[0] ) << 8 | (cmdData[1]);
+            lengthData[0] = baseTLV.pass[10];
+            lengthData[1] = baseTLV.pass[11];
+            NSInteger len = (lengthData[0] ) << 8 | (lengthData[1]);
+            rcData[0] = baseTLV.pass[12];
+            rcData[1] = baseTLV.pass[13];
+            Byte deviceData[len - 2];
+            for (int i = 0 ; i < len - 2; i++) {
+                deviceData[i] = baseTLV.pass[i + 14];
+//                printf("deviceData %d\n",deviceData[i]);
+            }
+//            NSData * deviceData1 = [NSData dataWithBytes:deviceData length:len - 2 ];
+//            NSLog(@"%@",deviceData1);
+            NSInteger rc = (rcData[0] ) << 8 | (rcData[1]);
+            if (rc == SUCCESS) {
+                switch (cmd) {
+                    case GET_AES_KEY:
+                        [self deviceAeskeyWithByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error ];
+                        break;
+                    case DEVICE_BASIC_INFORMATION:
+                        [self deviceInfo:hmDevice andByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error ];
+                        break;
+                    case GW_GET_BASIC:
+                        [self gatewayInfoWithByte:deviceData successBlock:(CallBackBlcok)success];
+                        break;
+                    case GW_BASIC_INFORMATION:
+                        [self gatewayInfoWithByte:deviceData successBlock:(CallBackBlcok)success];
+                        break;
+                    case GW_TIME_ZONE:
+                        [self deviceTimerZone:hmDevice andByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_SUB:
+                        [self gatewaySub:hmDevice andByte:deviceData];
+                        break;
+                    case GW_SUB_STATE:
+                        [self gatewaySubState:hmDevice andByte:deviceData];
+                        break;
+//                       网关子设备 ss属性
+                    case GW_SUB_SS:
+                        [self gatewaySubSS:hmDevice andByte:deviceData andByteLen:len - 2 successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_SUB_GS:
+                        [self gatewaySubGS:hmDevice andByte:deviceData successBlock:success];
+                        break;
+                    case GW_SUB_SE_GET:
+                        [self gatewaySubSEGetWithByte:deviceData];
+                        break;
+                    case GW_SUB_SE_SET:
+                        [self gatewaySubSESet:hmDevice andByte:deviceData successBlock:success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_UP_DATA:
+                        [self  gatewayUpDataWithByte:deviceData  successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_SET_ALARM_TIMER:
+                        [self  setGatewayAlarmTimerWithByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_GET_ALARM_TIMER:
+                        [self  getGatewayAlarmTimerWithByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_SET_ALLLIGHT_ONOFF:
+                        [self gatewayAllLightOnoffWithByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_GET_NIGHT_LIGHT:
+                        [self  gatewayNightLightWithByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_SET_WASH_SUB:
+                        [self  gatewayWashSubWithByte:deviceData successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error];
+                        break;
+                    case GW_ADD_DEVICE:
+                        [self gatewayAddDeviceWithByte:deviceData successBlock:success];
+                        break;
+                    case GW_ADD_DEVICE_SUCCESSFUL:
+                        [self gatewayAddDeviceSuccessfulWithByte:deviceData andByteLen:len - 2 andhmDevice:hmDevice successBlock:success];
+                        break;
+                    case SUB_DEL:
+                        [self  gatewayDelect:hmDevice andByte:deviceData successBlock:(CallBackBlcok)success];
+                        break;
+                    case SUB_ONLIE:
+                        [self  gatewayOnlie:hmDevice andByte:deviceData successBlock:success];
+                        break;
+                    default:
+                        break;
+                }
+            }else{
+                [self dataErrorWithrc:rc errorBlock:(errorBlcok)error];
+            }
+        }
+            break;
+        case EVENT:
+            break;
+        case ALARM:
+            break;
+        case FAULT:            
+            break;
+        case COERCION_OTA:
+            break;
+        case COERCION_OTA_ACK:
+            break;
+        case OTA:
+            break;
+        case OTA_ACK:
+            break;
+        case SENDKEY:
+            break;
+        case SENDLIST:
+            break;
+        case GETDEVICEID:
+            break;
+        case GETDEVICEID_ACK:
+            break;
+        case GETTIME:
+            break;
+        case GETTIME_ACK:
+            break;
+        case SCEN:
+            break;
+        case SCENE_ACK:
+            break;
+        case LINKAGE:
+            break;
+        case LINKAGE_ACK:
+            break;
+        case SUB_ONLINE:
+            break;
+        case DISCONNET:
+            break;
+        case ONLINE :
+            break;
+        case DISCONNECT:
+            break;
+        default:
+            break;
+    }
+}
+
+
+#pragma mark  网关相关数据信息回调
+/**
+ * 设备固件升级  需要先查询再升级
+ */
+-(void)gatewayUpDataWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    Boolean cf = false;
+    if ([HmUtils intType: deviceByte[1]] == 0x32) {
+        cf = true;
+        NSDictionary * dic = @{@"update" : @"YES"};
+        success(dic);
+    }else if([HmUtils intType: deviceByte[1]] != 0x32){
+        NSDictionary * dic = @{@"update" : @"NO"};
+        success(dic);
+    }
+}
+
+/**
+ * 设备AES key
+ */
+- (void)deviceAeskeyWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error {
+    
+    NSData *mData = [NSData dataWithBytes:deviceByte length:16];
+    NSString *result =[[ NSString alloc] initWithData:mData  encoding:NSUTF8StringEncoding];
+    NSLog(@"%@",result);
+    NSDictionary * dic = @{@"aeskey" : result};
+    //    TODO：回调秘钥
+    if ([HmUtils isEmptyString:result]) {
+    }else{
+        success(dic);
+    }
+}
+
+/**
+ * 设备基本信息
+ */
+- (void)deviceInfo:(HMDevice *)hmDevice andByte:(Byte [])deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error {
+    
+    Byte macByte[6];
+    for (int i = 0; i < 6; i++) {
+        macByte[i] = deviceByte[i];
+    }
+    NSData *adata = [[NSData alloc] initWithBytes:macByte length:6];
+    NSString * strdata = [HmUtils hexStringFromData:adata];
+    hmDevice.deviceMac = [strdata uppercaseString];
+    
+    NSInteger wifiSoftwareVer = (deviceByte[6] & 0xff) << 8 | (deviceByte[7] & 0xff);
+    hmDevice.softwareVer = [NSString stringWithFormat:@"%ld",(long)wifiSoftwareVer];
+    
+    NSInteger timeZone0 =  (deviceByte[8]& 0xff) << 8 | (deviceByte[9]& 0xff);
+    if((timeZone0 & 0x1000) == 0x1000){
+        float zone = ((float) timeZone0 - 0x1000) / 100;
+        hmDevice.timeZone = [NSString stringWithFormat:@"-%.2f",zone];
+    }else{
+        float zone = (float)timeZone0 / 100;
+        hmDevice.timeZone = [NSString stringWithFormat:@"+%.2f",zone];
+    }
+    NSLog(@"%@",hmDevice.timeZone);
+    
+    hmDevice.factoryID = (deviceByte[10] & 0xff) << 8 | (deviceByte[11] & 0xff);
+    hmDevice.type = (deviceByte[12] & 255) << 16 | (deviceByte[13] & 255) << 8 | (deviceByte[14] & 255);
+    
+    NSInteger hardwareVer = (deviceByte[15] & 0xff) << 8 | (deviceByte[16] & 0xff);
+    hmDevice.hardwareVer =  [NSString stringWithFormat:@"%ld",(long)hardwareVer];
+    
+    Byte versionByte[2];
+    versionByte[0] = deviceByte[17];
+    versionByte[1] = deviceByte[18];
+    hmDevice.version = (Byte)versionByte;
+    
+    NSInteger zSoftwareVer = (deviceByte[15] & 0xff) << 8 | (deviceByte[16] & 0xff);
+    hmDevice.zSoftwareVer =  [NSString stringWithFormat:@"%ld",(long)zSoftwareVer];
+    NSDictionary * dic = @{@"hmDevice":hmDevice};
+    if (dic) {
+        success(dic);
+    }
+}
+
+/**
+ * 时区
+ */
+- (void)deviceTimerZone:(HMDevice *)hmDevice andByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    NSInteger timeZone0 = (deviceByte[0]& 0xff) << 8 | (deviceByte[1] & 0xff);
+    if((timeZone0 & 0x1000) == 0x1000){
+        float zone = ((float) timeZone0 - 0x1000) / 100;
+        hmDevice.timeZone = [NSString stringWithFormat:@"-%.2f",zone];
+    }else{
+        float zone = (float)timeZone0 / 100;
+        hmDevice.timeZone = [NSString stringWithFormat:@"+%.2f",zone];
+    }
+    NSLog(@"%@",hmDevice.timeZone);
+    if (![HmUtils isEmptyString:hmDevice.timeZone]) {
+        NSDictionary * dic =@{@"timeZone" : hmDevice.timeZone};
+        success(dic);
+    }
+}
+
+/**
+ * 网关基础信息
+ * @param deviceByte pass数据
+ */
+- (void)gatewayInfoWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success{
+    
+    HMGatewayInfo *  hmGatewayInfo = [[HMGatewayInfo alloc]init];
+    Byte enByte[2];
+    enByte[0] = deviceByte[0];
+    enByte[1] = deviceByte[1];
+    int en = (deviceByte[0] & 0xff) << 8 | (deviceByte[1] & 0xff);
+    
+    if ((en & 0x01) == 0x01) {
+        hmGatewayInfo.Alarmlevel = [HmUtils intType:deviceByte[2]];
+    }
+    if ((en & 0x02) == 0x02) {
+        hmGatewayInfo.Soundlevel = [HmUtils  intType: deviceByte[3]];
+    }
+    if ((en & 0x04) == 0x04) {
+        hmGatewayInfo.Betimer = [HmUtils intType: deviceByte[4]];
+    }
+    if ((en & 0x08) == 0x08) {
+        hmGatewayInfo.Gwlanguage= [HmUtils intType: deviceByte[5]];
+    }
+    if ((en & 0x10) == 0x10) {
+        hmGatewayInfo.Gwlightlevel= [HmUtils intType: deviceByte[6]];
+    }
+    if ((en & 0x20) == 0x20) {
+        hmGatewayInfo.Gwlightonoff= [HmUtils intType: deviceByte[7]];
+    }
+    if ((en & 0x40) == 0x40) {
+        hmGatewayInfo.Lgtimer= [HmUtils intType: deviceByte[8]];
+    }
+    if ((en & 0x80) == 0x80) {
+        hmGatewayInfo.Armtype= [HmUtils intType: deviceByte[9]];
+    }
+    NSDictionary * dic = @{@"hmGatewayInfo": hmGatewayInfo};
+    if (dic) {
+        success(dic);
+    }
+}
+
+/**
+ * 联动小夜灯设备
+ */
+-(void)gatewayNightLightWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error {
+    
+    NSMutableArray * listArr = [NSMutableArray array];
+    int en1 = deviceByte[0] & 0xff;
+    BOOL isEn = false;
+    if (en1 == 1) {
+        isEn = true;
+    }
+    int count = deviceByte[1] & 0xff;
+    for (int i = 0 ; i < count; i++) {
+        NSString * str = [NSString stringWithFormat:@"%d",(deviceByte[1 + count] & 0xff) << 8 | (deviceByte[2 + count] & 0xff)];
+       [listArr addObject: str];
+    }
+    NSLog(@"en 使能: %d， listType:%@",en1,listArr);
+    NSString * en = [NSString stringWithFormat:@"%d",en1];
+    NSDictionary * dic =@{@"en" :en ,
+                          @"listArr": listArr
+                          };
+    if ([HmUtils isEmptyArray:listArr]) {
+         success(dic);
+    }
+}
+
+/**
+ * 一键控制ZIGBEE灯
+ */
+-(void)gatewayAllLightOnoffWithByte:(Byte *)deviceByte  successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    int onoff = deviceByte[0] & 0xff;
+    NSDictionary * dic =@{@"onoff": [NSString stringWithFormat:@"%d",onoff]};
+    if (onoff) {
+        success(dic);
+    }
+}
+
+/**
+ * 设置撤、布防、在家布防定时器
+ */
+-(void)setGatewayAlarmTimerWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    int type = deviceByte[0] & 0xff;
+    HMTimer * hmTimer = [[HMTimer alloc]init];
+    hmTimer.day = deviceByte[1] & 0xff;
+    hmTimer.month = deviceByte[2] & 0xff;
+    hmTimer.hour = deviceByte[3] & 0xff;
+    hmTimer.minutes = deviceByte[4] & 0xff;
+    hmTimer.wf = deviceByte[5] & 0xff;
+    NSDictionary * dic = @{@"type": [NSString stringWithFormat:@"%d",type],@"hmTimer":hmTimer};
+    if (type  && hmTimer !=nil ) {
+        success(dic);
+    }
+}
+
+/**
+ * 获取撤、布防、在家布防定时器
+ */
+-(void)getGatewayAlarmTimerWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    int type = deviceByte[0] & 0xff;
+    int cancelType = deviceByte[1] & 0xff;
+    HMTimer * hmTimer0 = [[HMTimer alloc]init];
+    if (cancelType != 0 ) {
+        hmTimer0.day = deviceByte[2] & 0xff;
+        hmTimer0.month = deviceByte[3] & 0xff;
+        hmTimer0.hour = deviceByte[4] & 0xff;
+        hmTimer0.minutes = deviceByte[5] & 0xff;
+        hmTimer0.wf = deviceByte[6] & 0xff;
+    }
+    int setOutType = deviceByte[7] & 0xff;
+    HMTimer * hmTimer1 = [[HMTimer alloc]init];
+    if (setOutType != 0) {
+        hmTimer1.day = deviceByte[8] & 0xff;
+        hmTimer1.month = deviceByte[9] & 0xff;
+        hmTimer1.hour = deviceByte[10] & 0xff;
+        hmTimer1.minutes = deviceByte[11] & 0xff;
+        hmTimer1.wf = deviceByte[12] & 0xff;
+    }
+    int setHomeType = deviceByte[13] & 0xff;
+    HMTimer * hmTimer2 = [[HMTimer alloc]init];
+    if (setHomeType != 0) {
+        hmTimer2.day = deviceByte[14] & 0xff;
+        hmTimer2.month = deviceByte[15] & 0xff;
+        hmTimer2.hour = deviceByte[16] & 0xff;
+        hmTimer2.minutes = deviceByte[17] & 0xff;
+        hmTimer2.wf = deviceByte[18] & 0xff;
+    }
+    NSDictionary * dic = @{
+                           @"type": [NSString stringWithFormat:@"%d",type],
+                     @"cancelType": [NSString stringWithFormat:@"%d",cancelType],
+                       @"hmTimer0":hmTimer0,
+                     @"setOutType": [NSString stringWithFormat:@"%d",setOutType],
+                       @"hmTimer0":hmTimer1,
+                    @"setHomeType": [NSString stringWithFormat:@"%d",setHomeType],
+                       @"hmTimer0":hmTimer2,
+                           };
+    if (type < 0x02 && type > 0x00){
+        success(dic);
+    }
+}
+
+
+/**
+ * 网关 家庭布防模式下报警子设备
+ */
+-(void)gatewayWashSubWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    NSMutableArray * listArr = [NSMutableArray array];
+    int count = deviceByte[0] & 0xff;
+    for (int i = 0 ; i < count; i++) {
+        NSString * str = [NSString stringWithFormat:@"%d",(deviceByte[1 + count] & 0xff) << 8 | (deviceByte[2 + count] & 0xff)];
+        [listArr addObject: str];
+    }
+    NSDictionary * dic =@{@"listType":listArr};
+    if ([HmUtils isEmptyArray:listArr]) {
+    }else{
+        success(dic);
+    }
+}
+
+/**
+ * 设备离线 网关上报数据
+ */
+- (void)gatewayOnlie:(HMDevice *)hmDevice andByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success{
+    int dex = (deviceByte[0] & 0xff) << 8 | (deviceByte [1] & 0xff);
+    NSString * index = [NSString stringWithFormat:@"%d",dex];
+    NSDictionary * dic = @{@"deviceIndex":index};
+    if (success) {
+        success(dic);
+    }
+}
+
+/**
+ * 网关删除设备
+ */
+- (void)gatewayDelect:(HMDevice *)hmDevice andByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success{
+    int dex = (deviceByte[0] & 0xff) << 8 | (deviceByte [1] & 0xff);
+    NSString * index = [NSString stringWithFormat:@"%d",dex];
+    NSDictionary * dic = @{@"deviceIndex":index};
+    if (success) {
+        success(dic);
+    }
+}
+
+#pragma mark  子设备SE属性及其回调
+/**
+ * 子设备 SE属性
+ */
+-(void)gatewaySubSESet:(HMDevice *)hmDevice andByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    
+    NSInteger index = (deviceByte[0] & 0xff) << 8 | (deviceByte[1] & 0xff);
+    HMSubDevice *subDevice = [[HMSubDevice alloc]init];
+    subDevice = [HMSubDeviceManage getDeviceWithIndex:index key:@"HMDecoder"];
+    NSInteger en = (deviceByte[2] & 0xff) << 8 | (deviceByte[3] & 0xff);
+    switch (subDevice.deviceType) {
+        case DEVICE_TYPE_ZIGBEE_RGB:{
+            HMRgbLight * hmRgb = [[HMRgbLight alloc]init];
+            if ((en & 0x01) == 0x01) {
+                hmRgb.onOff = [HmUtils intType:deviceByte[4]];
+            }
+            if ((en & 0x02) == 0x02) {
+                hmRgb.brightness = [HmUtils intType:deviceByte[5]];
+            }
+            if ((en & 0x04) == 0x04) {
+                hmRgb.colorR = (deviceByte[6] & 0xff) << 8 | (deviceByte[7] & 0xff);
+            }
+            if ((en & 0x08) == 0x08) {
+                hmRgb.colorG = (deviceByte[8] & 0xff) << 8 | (deviceByte[9] & 0xff);
+            }
+            if ((en & 0x10) == 0x10) {
+                hmRgb.colorB = (deviceByte[10] & 0xff) << 8 | (deviceByte[11] & 0xff);
+            }
+            if ((en & 0x20) == 0x20) {
+                hmRgb.sDay     = [HmUtils intType:deviceByte[12]];
+                hmRgb.sMonth   = [HmUtils intType:deviceByte[13]];
+                hmRgb.sHour    = [HmUtils intType:deviceByte[14]];
+                hmRgb.sMinutes = [HmUtils intType:deviceByte[15]];
+            }
+            if ((en & 0x40) == 0x40) {
+                hmRgb.eDay     = [HmUtils intType:deviceByte[16]];
+                hmRgb.eMonth   = [HmUtils intType:deviceByte[17]];
+                hmRgb.eHour    = [HmUtils intType:deviceByte[18]];
+                hmRgb.eMinutes = [HmUtils intType:deviceByte[19]];
+            }
+            if ((en & 0x80) == 0x80) {
+                hmRgb.wf = [HmUtils intType:deviceByte[20]];
+            }
+            NSDictionary * dic = @{@"hmRgb":hmRgb};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_DOORS:
+            break;
+        case DEVICE_TYPE_ZIGBEE_WATER:
+            break;
+        case DEVICE_TYPE_ZIGBEE_PIR:
+            break;
+        case DEVICE_TYPE_ZIGBEE_SMOKE:
+            break;
+        case DEVICE_TYPE_ZIGBEE_THP:{
+            HMThp * hmThp = [[HMThp alloc]init];
+            if ((en & 0x01) == 0x01) {
+                hmThp.humUp = (deviceByte[4] & 0xff) << 8 | (deviceByte[5] & 0xff);
+            }
+            if ((en & 0x02) == 0x02) {
+                hmThp.humLow = (deviceByte[6] & 0xff) << 8 | (deviceByte[7] & 0xff);
+            }
+            if ((en & 0x04) == 0x04) {
+                hmThp.temUp = (deviceByte[8] & 0xff) << 8 | (deviceByte[9] & 0xff);
+            }
+            if ((en & 0x08) == 0x08) {
+                 hmThp.temLow = (deviceByte[10] & 0xff) << 8 | (deviceByte[11] & 0xff);
+            }
+            if ((en & 0x10) == 0x10) {
+                if (([HmUtils intType:deviceByte[12]] & 0x0f)== 0xf0) {
+                    hmThp.humEnbale = true;
+                }else{
+                    hmThp.humEnbale = false;
+                }
+                if (([HmUtils intType:deviceByte[12]] & 0x0f) == 0x0f) {
+                    hmThp.humEnbale = true;
+                }else{
+                    hmThp.humEnbale = false;
+                }
+            }
+            NSDictionary * dic = @{@"hmThp":hmThp};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_GAS:
+            break;
+        case DEVICE_TYPE_ZIGBEE_CO:
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOS:
+            break;
+        case DEVICE_TYPE_ZIGBEE_SW:
+            break;
+        case DEVICE_TYPE_ZIGBEE_PLUGIN:{
+            HMPlug * hmPlug = [[HMPlug alloc]init];
+            if ((en & 0x01) == 0x01) {
+                hmPlug.powerSwitch = [HmUtils intType:deviceByte[4]];
+            }
+            if ((en & 0x02) == 0x02) {
+                hmPlug.powersDay = [HmUtils intType:deviceByte[5]];
+                hmPlug.powersMonth = [HmUtils intType:deviceByte[6]];
+                hmPlug.powersHour = [HmUtils intType:deviceByte[7]];
+                hmPlug.powersMinutes = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x04) == 0x04) {
+                hmPlug.powereDay = [HmUtils intType:deviceByte[9]];
+                hmPlug.powereMonth = [HmUtils intType:deviceByte[10]];
+                hmPlug.powereHour = [HmUtils intType:deviceByte[11]];
+                hmPlug.powereMinutes = [HmUtils intType:deviceByte[12]];
+            }
+            if ((en & 0x08) == 0x08) {
+                hmPlug.powerwf = [HmUtils intType:deviceByte[13]];
+            }
+            if ((en & 0x10) == 0x10) {
+                hmPlug.usbSwitch = [HmUtils intType:deviceByte[14]];
+            }
+            if ((en & 0x20) == 0x20) {
+                hmPlug.powersDay = [HmUtils intType:deviceByte[5]];
+                hmPlug.powersMonth = [HmUtils intType:deviceByte[6]];
+                hmPlug.powersHour = [HmUtils intType:deviceByte[7]];
+                hmPlug.powersMinutes = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x40) == 0x40) {
+                hmPlug.powereDay = [HmUtils intType:deviceByte[9]];
+                hmPlug.powereMonth = [HmUtils intType:deviceByte[10]];
+                hmPlug.powereHour = [HmUtils intType:deviceByte[11]];
+                hmPlug.powereMinutes = [HmUtils intType:deviceByte[12]];
+            }
+            if ((en & 0x80) == 0x80) {
+                hmPlug.usbSwitch = [HmUtils intType:deviceByte[13]];
+            }
+            NSDictionary * dic = @{@"hmPlug":hmPlug};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_METRTING_PLUGIN:{
+            HMMetringPlug * Mplug = [[HMMetringPlug alloc]init];
+            if ((en & 0x01) == 0x01) {
+                Mplug.onoff = [HmUtils intType:deviceByte[4]];
+            }
+            if ((en & 0x02) == 0x02) {
+                Mplug.sDay = [HmUtils intType:deviceByte[5]];
+                Mplug.sMonth = [HmUtils intType:deviceByte[6]];
+                Mplug.sHour = [HmUtils intType:deviceByte[7]];
+                Mplug.sMinutes = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x04) == 0x04) {
+                Mplug.eDay = [HmUtils intType:deviceByte[9]];
+                Mplug.eMonth = [HmUtils intType:deviceByte[10]];
+                Mplug.eHour = [HmUtils intType:deviceByte[11]];
+                Mplug.eMinutes= [HmUtils intType:deviceByte[12]];
+            }
+            if ((en & 0x08) == 0x08) {
+                Mplug.wf = [HmUtils intType:deviceByte[13]];
+            }
+            NSDictionary * dic = @{@"MetringPlug":Mplug};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_ONE_ONOFF:{
+            HMSwitch * hmOnoff = [[HMSwitch alloc] init];
+            if ((en & 0x01) == 0x01) {
+                hmOnoff.onoff1 = [HmUtils intType:deviceByte[4]];
+            }
+            if ((en & 0x02) == 0x02) {
+                hmOnoff.sDay1 = [HmUtils intType:deviceByte[5]];
+                hmOnoff.sMonth1 = [HmUtils intType:deviceByte[6]];
+                hmOnoff.sHour1 = [HmUtils intType:deviceByte[7]];
+                hmOnoff.sMinutes1 = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x04) == 0x04) {
+                hmOnoff.eDay1 = [HmUtils intType:deviceByte[9]];
+                hmOnoff.eMonth1 = [HmUtils intType:deviceByte[10]];
+                hmOnoff.eHour1 = [HmUtils intType:deviceByte[11]];
+                hmOnoff.eMinutes1 = [HmUtils intType:deviceByte[12]];
+            }
+            if ((en & 0x08) == 0x08) {
+                hmOnoff.wf1 = [HmUtils intType:deviceByte[13]];
+            }
+            NSDictionary * dic = @{@"hmOnoff":hmOnoff};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_TWO_ONOFF:{
+            HMSwitch * hmOnoff2 = [[HMSwitch alloc] init];
+            if ((en & 0x01) == 0x01) {
+                if (([HmUtils intType:deviceByte[4]] & 0x01) == 0x01) {
+                    hmOnoff2.onoff1 = 1;
+                }else{
+                    hmOnoff2.onoff1 = 0;
+                }
+                if (([HmUtils intType:deviceByte[4]] & 0x10) == 0x10) {
+                    hmOnoff2.onoff2 = 1;
+                }else{
+                    hmOnoff2.onoff2 = 0;
+                }
+            }
+            if ((en & 0x02) == 0x02) {
+                hmOnoff2.sDay1 = [HmUtils intType:deviceByte[5]];
+                hmOnoff2.sMonth1 = [HmUtils intType:deviceByte[6]];
+                hmOnoff2.sHour1 = [HmUtils intType:deviceByte[7]];
+                hmOnoff2.sMinutes1 = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x04) == 0x04) {
+                hmOnoff2.eDay1 = [HmUtils intType:deviceByte[9]];
+                hmOnoff2.eMonth1 = [HmUtils intType:deviceByte[10]];
+                hmOnoff2.eHour1 = [HmUtils intType:deviceByte[11]];
+                hmOnoff2.eMinutes1 = [HmUtils intType:deviceByte[12]];
+            }
+            if ((en & 0x08) == 0x08) {
+                hmOnoff2.wf1 = [HmUtils intType:deviceByte[13]];
+            }
+            if ((en & 0x10) == 0x10) {
+                hmOnoff2.sDay2 = [HmUtils intType:deviceByte[14]];
+                hmOnoff2.sMonth2 = [HmUtils intType:deviceByte[15]];
+                hmOnoff2.sHour2 = [HmUtils intType:deviceByte[16]];
+                hmOnoff2.sMinutes2 = [HmUtils intType:deviceByte[17]];
+            }
+            if ((en & 0x20) == 0x20) {
+                hmOnoff2.eDay2 = [HmUtils intType:deviceByte[18]];
+                hmOnoff2.eMonth2 = [HmUtils intType:deviceByte[19]];
+                hmOnoff2.eHour2 = [HmUtils intType:deviceByte[20]];
+                hmOnoff2.eMinutes2 = [HmUtils intType:deviceByte[21]];
+            }
+            if ((en & 0x40) == 0x40) {
+                hmOnoff2.wf2 = [HmUtils intType:deviceByte[22]];
+            }
+            NSDictionary * dic = @{@"hmOnoff2":hmOnoff2};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_THREE_ONOFF:{
+            HMSwitch * hmOnoff3 = [[HMSwitch alloc] init];
+            if ((en & 0x01) == 0x01) {
+                if (([HmUtils intType:deviceByte[4]] & 0x01) == 0x01) {
+                    hmOnoff3.onoff1 = 1;
+                }else{
+                    hmOnoff3.onoff1 = 0;
+                }
+                if (([HmUtils intType:deviceByte[4]] & 0x10) == 0x10) {
+                    hmOnoff3.onoff2 = 1;
+                }else{
+                    hmOnoff3.onoff2 = 0;
+                }
+                if (([HmUtils intType:deviceByte[4]] & 0x100) == 0x100) {
+                    hmOnoff3.onoff3 = 1;
+                }else{
+                    hmOnoff3.onoff3 = 0;
+                }
+            }
+            if ((en & 0x02) == 0x02) {
+                hmOnoff3.sDay1 = [HmUtils intType:deviceByte[5]];
+                hmOnoff3.sMonth1 = [HmUtils intType:deviceByte[6]];
+                hmOnoff3.sHour1 = [HmUtils intType:deviceByte[7]];
+                hmOnoff3.sMinutes1 = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x04) == 0x04) {
+                hmOnoff3.eDay1 = [HmUtils intType:deviceByte[9]];
+                hmOnoff3.eMonth1 = [HmUtils intType:deviceByte[10]];
+                hmOnoff3.eHour1 = [HmUtils intType:deviceByte[11]];
+                hmOnoff3.eMinutes1 = [HmUtils intType:deviceByte[12]];
+            }
+            if ((en & 0x08) == 0x08) {
+                hmOnoff3.wf1 = [HmUtils intType:deviceByte[13]];
+            }
+            if ((en & 0x10) == 0x10) {
+                hmOnoff3.sDay2 = [HmUtils intType:deviceByte[14]];
+                hmOnoff3.sMonth2 = [HmUtils intType:deviceByte[15]];
+                hmOnoff3.sHour2 = [HmUtils intType:deviceByte[16]];
+                hmOnoff3.sMinutes2 = [HmUtils intType:deviceByte[17]];
+            }
+            if ((en & 0x20) == 0x20) {
+                hmOnoff3.eDay2 = [HmUtils intType:deviceByte[18]];
+                hmOnoff3.eMonth2 = [HmUtils intType:deviceByte[19]];
+                hmOnoff3.eHour2 = [HmUtils intType:deviceByte[20]];
+                hmOnoff3.eMinutes2 = [HmUtils intType:deviceByte[21]];
+            }
+            if ((en & 0x40) == 0x40) {
+                hmOnoff3.wf2 = [HmUtils intType:deviceByte[22]];
+            }
+            if ((en & 0x80) == 0x80) {
+                hmOnoff3.sDay3 = [HmUtils intType:deviceByte[23]];
+                hmOnoff3.sMonth3 = [HmUtils intType:deviceByte[24]];
+                hmOnoff3.sHour3 = [HmUtils intType:deviceByte[25]];
+                hmOnoff3.sMinutes3 = [HmUtils intType:deviceByte[26]];
+            }
+            if ((en & 0x100) == 0x100) {
+                hmOnoff3.eDay3 = [HmUtils intType:deviceByte[27]];
+                hmOnoff3.eMonth3 = [HmUtils intType:deviceByte[28]];
+                hmOnoff3.eHour3 = [HmUtils intType:deviceByte[29]];
+                hmOnoff3.eMinutes3 = [HmUtils intType:deviceByte[30]];
+            }
+            if ((en & 0x200) == 0x200) {
+                hmOnoff3.wf3 = [HmUtils intType:deviceByte[31]];
+            }
+            NSDictionary * dic = @{@"hmOnoff3":hmOnoff3};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_RC:
+            break;
+        case DEVICE_TYPE_ZIGBEE_RELAY:{
+            HMRelay * hmRelay = [[HMRelay alloc]init];
+            if ((en & 0x01) == 0x01) {
+                hmRelay.onoff = [HmUtils intType:deviceByte[4]];
+            }
+            NSDictionary * dic = @{@"hmRelay":hmRelay};
+            if (dic) {
+                success(dic);
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOUND_AND_LIGHT_ALARM:{
+            HMSoundAndLightAlarm * alarm = [[HMSoundAndLightAlarm alloc]init];
+            if ((en & 0x01) == 0x01 ) {
+                alarm.onoff = [HmUtils intType:deviceByte[4]];
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_ILLUMINANCE:
+            break;
+        case DEVICE_TYPE_ZIGBEE_FOUR_WHEEL:{
+            HMFourLight * hmFourLight = [[HMFourLight alloc]init];
+            if ((en & 0x01) == 0x01) {
+                if (([HmUtils intType:deviceByte[4]] & 0b1) == 0b1) {
+                    hmFourLight.onoff1 = 1;
+                }else{
+                    hmFourLight.onoff1 = 0;
+                }
+                if (([HmUtils intType:deviceByte[4]] & 0b10) == 0b10) {
+                    hmFourLight.onoff2 = 1;
+                }else{
+                    hmFourLight.onoff2 = 0;
+                }
+                if (([HmUtils intType:deviceByte[4]] & 0b100) == 0b100) {
+                    hmFourLight.onoff3 = 1;
+                }else{
+                    hmFourLight.onoff3 = 0;
+                }
+                if (([HmUtils intType:deviceByte[4]] & 0b1000) == 0b1000) {
+                    hmFourLight.onoff4 = 1;
+                }else{
+                    hmFourLight.onoff4 = 0;
+                }
+            }
+            if ((en & 0x02) == 0x02) {
+                hmFourLight.brightness1 = [HmUtils intType:deviceByte[5]];
+                hmFourLight.brightness2 = [HmUtils intType:deviceByte[6]];
+                hmFourLight.brightness3 = [HmUtils intType:deviceByte[7]];
+                hmFourLight.brightness4 = [HmUtils intType:deviceByte[8]];
+            }
+            if ((en & 0x04) == 0x04) {
+                hmFourLight.cwl1 = ([HmUtils intType:deviceByte[9]]  >> 4) & 0xff;
+                hmFourLight.cwl2 = ([HmUtils intType:deviceByte[9]]  >> 8) & 0xff;
+                hmFourLight.cwl3 = ([HmUtils intType:deviceByte[10]] >> 4) & 0xff;
+                hmFourLight.cwl4 = ([HmUtils intType:deviceByte[10]] >> 8) & 0xff;
+            }
+            if ((en & 0x08) == 0x08) {
+                hmFourLight.sDay1 = [HmUtils intType:deviceByte[11]];
+                hmFourLight.sMonth1 = [HmUtils intType:deviceByte[12]];
+                hmFourLight.sHour1= [HmUtils intType:deviceByte[13]];
+                hmFourLight.sMinutes1 = [HmUtils intType:deviceByte[14]];
+            }
+            if ((en & 0x10) == 0x10) {
+                hmFourLight.sDay1 = [HmUtils intType:deviceByte[15]];
+                hmFourLight.sMonth1 = [HmUtils intType:deviceByte[16]];
+                hmFourLight.sHour1= [HmUtils intType:deviceByte[17]];
+                hmFourLight.sMinutes1 = [HmUtils intType:deviceByte[18]];
+            }
+            if ((en & 0x20) == 0x20) {
+                hmFourLight.wf1 = [HmUtils intType:deviceByte[19]];
+            }
+            if ((en & 0x08) == 0x40) {
+                hmFourLight.sDay2 = [HmUtils intType:deviceByte[20]];
+                hmFourLight.sMonth2 = [HmUtils intType:deviceByte[21]];
+                hmFourLight.sHour2= [HmUtils intType:deviceByte[22]];
+                hmFourLight.sMinutes2 = [HmUtils intType:deviceByte[23]];
+            }
+            if ((en & 0x10) == 0x80) {
+                hmFourLight.sDay2 = [HmUtils intType:deviceByte[24]];
+                hmFourLight.sMonth2 = [HmUtils intType:deviceByte[25]];
+                hmFourLight.sHour2= [HmUtils intType:deviceByte[26]];
+                hmFourLight.sMinutes2 = [HmUtils intType:deviceByte[27]];
+            }
+            if ((en & 0b100000000) == 0b100000000) {
+                hmFourLight.wf2 = [HmUtils intType:deviceByte[28]];
+            }
+            if ((en & 0b1000000000) == 0b1000000000) {
+                hmFourLight.sDay3 = [HmUtils intType:deviceByte[29]];
+                hmFourLight.sMonth3 = [HmUtils intType:deviceByte[30]];
+                hmFourLight.sHour3 = [HmUtils intType:deviceByte[31]];
+                hmFourLight.sMinutes3 = [HmUtils intType:deviceByte[32]];
+            }
+            if ((en & 0b10000000000) == 0b10000000000) {
+                hmFourLight.sDay3 = [HmUtils intType:deviceByte[33]];
+                hmFourLight.sMonth3 = [HmUtils intType:deviceByte[34]];
+                hmFourLight.sHour3 = [HmUtils intType:deviceByte[35]];
+                hmFourLight.sMinutes3  = [HmUtils intType:deviceByte[36]];
+            }
+            if ((en & 0b100000000000) == 0b100000000000) {
+                hmFourLight.wf3 = [HmUtils intType:deviceByte[37]];
+            }
+            if ((en & 0b1000000000000) ==0b1000000000000) {
+                hmFourLight.sDay4 = [HmUtils intType:deviceByte[38]];
+                hmFourLight.sMonth4 = [HmUtils intType:deviceByte[39]];
+                hmFourLight.sHour4 = [HmUtils intType:deviceByte[40]];
+                hmFourLight.sMinutes4 = [HmUtils intType:deviceByte[41]];
+            }
+            if ((en & 0b10000000000000) == 0b10000000000000) {
+                hmFourLight.sDay4 = [HmUtils intType:deviceByte[42]];
+                hmFourLight.sMonth4 = [HmUtils intType:deviceByte[43]];
+                hmFourLight.sHour4 = [HmUtils intType:deviceByte[44]];
+                hmFourLight.sMinutes4  = [HmUtils intType:deviceByte[45]];
+            }
+            if ((en & 0b100000000000000) == 0b100000000000000) {
+                hmFourLight.wf4 = [HmUtils intType:deviceByte[46]];
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_AIR:
+            break;
+        case DEVICE_TYPE_ZIGBEE_THERMOSTAT:
+            break;
+        case DEVICE_TYPE_ZIGBEE_CURTAIN_CONTROLLER:
+            break;
+//        case DEVICE_TYPE_ZIGBEE_SMART_LOCK:
+//            break;
+        default:
+            break;
+    }
+}
+
+
+/**
+ * 网关获取se属性
+ */
+- (void)gatewaySubSEGetWithByte:(Byte *)deviceByte{
+    
+}
+
+/**
+ * 网关子设备
+ */
+- (void)gatewaySub:(HMDevice *)hmDevice andByte:(Byte *)deviceByte{
+}
+
+/**
+ * 网关子设备状态
+ */
+- (void)gatewaySubState:(HMDevice *)hmDevice andByte:(Byte *)deviceByte{
+}
+
+#pragma mark  获取子设备单项状态值
+/**
+ * 子设备单项状态值
+ */
+- (void)gatewaySubGS:(HMDevice *)hmDevice andByte:(Byte *)deviceData successBlock:(CallBackBlcok)success{
+    
+    NSInteger index = (deviceData[0] & 0xff) << 8 | (deviceData[1] & 0xff);
+    HMSubDevice *subDevice = [[HMSubDevice alloc]init];
+    subDevice = [HMSubDeviceManage getDeviceWithIndex:index key:@"HMDecoder"];
+    NSInteger num = [HmUtils intType:deviceData[2]];
+    HMSSBase * hmSSBase = [[HMSSBase alloc]init];
+    switch (subDevice.deviceType) {
+        case DEVICE_TYPE_ZIGBEE_DOORS:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else if(num == 3){
+                hmSSBase.AS = [HmUtils intType:deviceData[3]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_WATER:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_PIR:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else if(num == 3){
+                hmSSBase.AS = [HmUtils intType:deviceData[3]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SMOKE:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                    //TODO： 缓存上报的子设备数据信息
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                    hmSSBase.onoff = 3;
+                }else{
+                    if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                        hmSSBase.onoff = 1;
+                    }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                        hmSSBase.onoff = 2;
+                    }else{
+                        hmSSBase.onoff = 0;
+                    }
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_GAS:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:1];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_CO:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOS :{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SW:{
+            if (num == 0) {
+                /*ZT,BIT0:在线状态OL, 0为false,1为true;
+                 BIT1:电池低压报警BA,0为false,1为true;
+                 BIT2~BIT3:开关状态OF,0撤防,1外出布防, 2在家,3 SOS报警；
+                 */
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                    hmSSBase.onoff = 3;
+                }else{
+                    if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                        hmSSBase.onoff = 1;
+                    }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                        hmSSBase.onoff = 2;
+                    }else{
+                        hmSSBase.onoff = 0;
+                    }
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_THP:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else if (num == 3){
+                hmSSBase.TP = [NSString stringWithFormat:@"%d",(deviceData[6] & 0xff) << 8 | (deviceData[7] & 0xff)];
+            }else if (num == 4){
+                hmSSBase.HY = [NSString stringWithFormat:@"%d",(deviceData[8] & 0xff) << 8 | (deviceData[9] & 0xff)];
+            }else if (num == 5){
+                hmSSBase.HU = (deviceData[10] & 0xff) << 8 | (deviceData[11] & 0xff);
+            }else if (num == 6){
+                hmSSBase.HL = (deviceData[12] & 0xff) << 8 | (deviceData[13] & 0xff);
+            }else if (num == 7){
+               hmSSBase.TU = (deviceData[14] & 0xff) << 8 | (deviceData[15] & 0xff);
+            }else if (num == 8){
+                hmSSBase.TL= (deviceData[15] & 0xff) << 8 | (deviceData[16] & 0xff);
+            }else if (num == 9){
+                if ([HmUtils intType:deviceData[17]] == 0x0f || [HmUtils intType:deviceData[17]] == 0x00 ) {
+                    hmSSBase.humEnbale = [HmUtils intType:deviceData[17]];
+                }else{
+                    hmSSBase.tempEnbale = [HmUtils intType:deviceData[17]];
+                }
+            }
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_RGB :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.LE = [HmUtils intType:deviceData[2]];
+            }else if (num == 3){
+                hmSSBase.CR = (deviceData[3] & 0xff) << 8 | (deviceData[4] & 0xff);
+            }else if (num == 4){
+                hmSSBase.CG = (deviceData[5] & 0xff) << 8 | (deviceData[6] & 0xff);
+            }else if (num == 5){
+                hmSSBase.CB = (deviceData[7] & 0xff) << 8 | (deviceData[8] & 0xff);
+            }else if (num == 6){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[9]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[10]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[11]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[12]];
+            }else if (num == 7){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[13]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[14]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[15]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[16]];
+            }else if (num == 8){
+                hmSSBase.WF = [HmUtils intType:deviceData[17]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_PLUGIN :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.RO = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.UO = [HmUtils intType:deviceData[2]];
+            }else if (num == 3){
+                hmSSBase.TMr = [self intByByteFour:deviceData andNum:3];
+            }else if (num == 4){
+                hmSSBase.Tmu = [self intByByteFour:deviceData andNum:7];
+            }else if (num == 5){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[11]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[12]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[13]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[14]];
+            }else if (num == 6){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[15]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[16]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[17]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[18]];
+            }else if (num == 7){
+                hmSSBase.WFr = [HmUtils intType:deviceData[19]];
+            }else if (num == 8){
+                hmSSBase.usbsMonth = [HmUtils intType:deviceData[20]];
+                hmSSBase.usbsDay= [HmUtils intType:deviceData[21]];
+                hmSSBase.usbsHour = [HmUtils intType:deviceData[22]];
+                hmSSBase.usbsMinutes = [HmUtils intType:deviceData[23]];
+            }else if (num == 9){
+                hmSSBase.usbeMonth = [HmUtils intType:deviceData[24]];
+                hmSSBase.usbeDay= [HmUtils intType:deviceData[25]];
+                hmSSBase.usbeHour = [HmUtils intType:deviceData[26]];
+                hmSSBase.usbeMinutes = [HmUtils intType:deviceData[27]];
+            }else if (num == 10){
+                 hmSSBase.WFu = [HmUtils intType:deviceData[28]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_METRTING_PLUGIN :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.RO = [HmUtils intType:deviceData[2]];
+            }else if (num == 3){
+                hmSSBase.PW = [NSString stringWithFormat:@"%ld", (long)[self intByByteFour:deviceData andNum:3]];
+            }else if (num == 4){
+                hmSSBase.ET = [NSString stringWithFormat:@"%ld",(long)[self longByByteFour:deviceData andNum:7]];
+            }else if (num == 5){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:15];
+            }else if (num == 6){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[11]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[12]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[13]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[14]];
+            }else if (num == 7){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[15]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[16]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[17]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[18]];
+            }else if (num == 8){
+                hmSSBase.WF = [HmUtils intType:deviceData[19]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_ONE_ONOFF :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else if (num == 3){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[3]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[4]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[5]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[6]];
+            }else if (num == 4){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[7]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[8]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[9]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[10]];
+            }else if (num == 5){
+                hmSSBase.WF = [HmUtils intType:deviceData[11]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_TWO_ONOFF :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM1= [self intByByteFour:deviceData andNum:2];
+            }else if (num == 3){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[3]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[4]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[5]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[6]];
+            }else if (num == 4){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[7]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[8]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[9]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[10]];
+            }else if (num == 5){
+                hmSSBase.WF1 = [HmUtils intType:deviceData[11]];
+            }else if (num == 6){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[12]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[13]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[14]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[15]];
+            }else if (num == 7){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[16]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[17]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[18]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[19]];
+            }else if (num == 8){
+                hmSSBase.WF2 = [HmUtils intType:deviceData[20]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_THREE_ONOFF :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM1= [self intByByteFour:deviceData andNum:2];
+            }else if (num == 3){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[3]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[4]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[5]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[6]];
+            }else if (num == 4){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[7]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[8]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[9]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[10]];
+            }else if (num == 5){
+                hmSSBase.WF1 = [HmUtils intType:deviceData[11]];
+            }else if (num == 6){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[12]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[13]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[14]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[15]];
+            }else if (num == 7){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[16]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[17]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[18]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[19]];
+            }else if (num == 8){
+                hmSSBase.WF2 = [HmUtils intType:deviceData[20]];
+            }else if (num == 9){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[21]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[22]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[23]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[24]];
+            }else if (num == 10){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[25]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[26]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[27]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[28]];
+            }else if (num == 11){
+                hmSSBase.WF3 = [HmUtils intType:deviceData[29]];
+            }else{}
+        }
+            break;
+        case  DEVICE_TYPE_ZIGBEE_RELAY:{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOUND_AND_LIGHT_ALARM:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if(num == 2){
+                hmSSBase.DT = [self intByByteFour:deviceData andNum:2];
+            }else if (num == 3){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:6];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_AIR:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.TP = [NSString stringWithFormat:@"%d",(deviceData[2] & 0xff) << 8 | (deviceData[3] & 0xff)];
+            }else if (num == 3){
+                hmSSBase.HY = [NSString stringWithFormat:@"%d",(deviceData[4] & 0xff) << 8 | (deviceData[5] & 0xff)];
+            }else if (num == 4){
+                hmSSBase.TV = (deviceData[6] & 0xff) << 8 | (deviceData[7] & 0xff);
+            }else if (num == 5){
+                hmSSBase.P2 = (deviceData[8] & 0xff) << 8 | (deviceData[9] & 0xff);
+            }else if (num == 6){
+                hmSSBase.CC = (deviceData[10] & 0xff) << 8 | (deviceData[11] & 0xff);
+            }else if (num == 7){
+                hmSSBase.AQ = (deviceData[12] & 0xff) << 8 | (deviceData[13] & 0xff);
+            }else if (num == 8){
+                hmSSBase.P1 = (deviceData[14] & 0xff) << 8 | (deviceData[15] & 0xff);
+            }else if (num == 9){
+                hmSSBase.TM = (deviceData[16] & 0xff) << 8 | (deviceData[17] & 0xff);
+            }else if (num == 10){
+                hmSSBase.HU = (deviceData[18] & 0xff) << 8 | (deviceData[19] & 0xff);
+            }else if (num == 11){
+                hmSSBase.HL = (deviceData[20] & 0xff) << 8 | (deviceData[21] & 0xff);
+            }else if (num == 12){
+                hmSSBase.TU = (deviceData[22] & 0xff) << 8 | (deviceData[17] & 0xff);
+            }else if (num == 13){
+                hmSSBase.TL = (deviceData[24] & 0xff) << 8 | (deviceData[17] & 0xff);
+            }else if (num == 14){
+                hmSSBase.TM = (deviceData[16] & 0xff) << 8 | (deviceData[17] & 0xff);
+            }else if (num == 15){
+                if ([HmUtils intType:deviceData[18]] == 0x0f || [HmUtils intType:deviceData[19]] == 0x00 ) {
+                    hmSSBase.humEnbale = [HmUtils intType:deviceData[20]];
+                }else{
+                    hmSSBase.tempEnbale = [HmUtils intType:deviceData[20]];
+                }
+            }else{}
+        }
+            break;
+        case  DEVICE_TYPE_ZIGBEE_THERMOSTAT:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if(num == 2){
+                 hmSSBase.TP = [NSString stringWithFormat:@"%d",(deviceData[2] & 0xff) << 8 | (deviceData[3] & 0xff)];
+            }else if (num == 3){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:4];
+            }else if (num == 4){
+                hmSSBase.TU = (deviceData[4] & 0xff) << 8 | (deviceData[5] & 0xff);
+            }else if (num == 5){
+                hmSSBase.TL = (deviceData[6] & 0xff) << 8 | (deviceData[7] & 0xff);
+            }else if (num == 6){
+                if ([HmUtils intType:deviceData[18]] == 0x0f || [HmUtils intType:deviceData[19]] == 0x00 ) {
+                    hmSSBase.humEnbale = [HmUtils intType:deviceData[8]];
+                }else{
+                    hmSSBase.tempEnbale = [HmUtils intType:deviceData[8]];
+                }
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_FOUR_WHEEL :{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+                hmSSBase.onoff4 = [HmUtils intType:deviceData[2]] % 2;
+                hmSSBase.onoff3 = ([HmUtils intType:deviceData[2]] - hmSSBase.onoff2) /2;
+                hmSSBase.onoff2 = ([HmUtils intType:deviceData[2]] - hmSSBase.onoff1)/4;
+                hmSSBase.onoff1 = [HmUtils intType:deviceData[2]] /8;
+            }else if (num == 2){
+                hmSSBase.LEL1 = [HmUtils intType:deviceData[6]];
+                hmSSBase.LEL2 = [HmUtils intType:deviceData[5]];
+                hmSSBase.LEL3 = [HmUtils intType:deviceData[4]];
+                hmSSBase.LEL4 = [HmUtils intType:deviceData[3]];
+            }else if (num == 3){
+                hmSSBase.CW1 = [HmUtils intType:deviceData[8]]%16;
+                hmSSBase.CW2 = [HmUtils intType:deviceData[8]]/16;
+                hmSSBase.CW3 = [HmUtils intType:deviceData[7]]%16;
+                hmSSBase.CW4 = [HmUtils intType:deviceData[7]]/16;
+            }else if (num == 5){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:9];
+            }else if (num == 6){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[13]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[14]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[15]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[16]];
+            }else if (num == 7){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[17]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[18]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[19]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[20]];
+            }else if (num == 8){
+                hmSSBase.WF1 = [HmUtils intType:deviceData[21]];
+            }else if (num == 9){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[22]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[23]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[24]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[25]];
+            }else if (num == 10){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[26]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[27]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[28]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[29]];
+            }else if (num == 11){
+                hmSSBase.WF2 = [HmUtils intType:deviceData[30]];
+            }else if (num == 12){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[31]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[32]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[33]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[34]];
+            }else if (num == 13){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[35]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[36]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[37]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[38]];
+            }else if (num == 14){
+                hmSSBase.WF3 = [HmUtils intType:deviceData[39]];
+            }else if (num == 15){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[40]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[41]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[42]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[43]];
+            }else if (num == 16){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[44]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[45]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[46]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[47]];
+            }else if (num == 17){
+                hmSSBase.WF3 = [HmUtils intType:deviceData[48]];
+            }else{}
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SHOCK:{
+            if (num == 0) {
+                hmSSBase.isOnline = [HmUtils intType:deviceData[0]];
+            }else if (num == 1){
+                hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.MA = [HmUtils intType:deviceData[2]];
+            }else if (num == 3){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:3];
+            }else if (num == 4){
+                hmSSBase.sMonth = [HmUtils intType:deviceData[7]];
+                hmSSBase.sDay= [HmUtils intType:deviceData[8]];
+                hmSSBase.sHour = [HmUtils intType:deviceData[9]];
+                hmSSBase.sMinutes = [HmUtils intType:deviceData[10]];
+            }else if (num == 5){
+                hmSSBase.eMonth = [HmUtils intType:deviceData[11]];
+                hmSSBase.eDay= [HmUtils intType:deviceData[12]];
+                hmSSBase.eHour = [HmUtils intType:deviceData[13]];
+                hmSSBase.eMinutes = [HmUtils intType:deviceData[14]];
+            }else if (num == 6){
+                hmSSBase.WF = [HmUtils intType:deviceData[15]];
+            }else{}
+        }
+            break;
+        case  DEVICE_TYPE_ZIGBEE_INTELLIGENT_DOOR_LOCK:{
+            if (num == 0) {
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                    hmSSBase.isOnline = YES;
+                }else{
+                    hmSSBase.isOnline = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                    hmSSBase.isBpAlarm = YES;
+                }else{
+                    hmSSBase.isBpAlarm = NO;
+                }
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }else if (num == 1){
+                hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            }else if (num == 2){
+                hmSSBase.OT = [HmUtils intType:deviceData[2]];
+            }else if (num == 3){
+                hmSSBase.TM = [HmUtils intType:deviceData[3]];
+            }else if (num == 4){
+                hmSSBase.ID = [HmUtils intType:deviceData[4]];
+            }else if (num == 5){
+                hmSSBase.IN = [HmUtils intType:deviceData[5]];
+            }else if (num == 6){
+                hmSSBase.TM = [self intByByteFour:deviceData andNum:6];
+            }else if (num == 7){
+                hmSSBase.RE = [HmUtils intType:deviceData[10]];
+            }else{}
+        }
+            break;
+        default:
+            break;
+    }
+    success(@{@"HMSSBase":hmSSBase});
+}
+
+
+#pragma mark  添加子设备及其回调
+/**
+ * 网关是否进入添加子设备模式
+ */
+-(void)gatewayAddDeviceWithByte:(Byte *)deviceByte successBlock:(CallBackBlcok)success{
+    if (deviceByte[0] == 0x31) {
+        NSDictionary * dict = @{@"state" : @YES};
+        success(dict);
+    }else{
+        NSDictionary * dict = @{@"state" : @NO};
+        success(dict);
+    }
+}
+
+/**
+ * 网关添加子设备成功
+ */
+-(void)gatewayAddDeviceSuccessfulWithByte:(Byte *)deviceByte andByteLen:(NSInteger)len andhmDevice: (HMDevice *)hmDevice successBlock:(CallBackBlcok)success{
+    
+    int index = (deviceByte[0] & 0xff) << 8 | (deviceByte [1] & 0xff);
+    int deviceType = (deviceByte[2] & 0xff) << 8 | (deviceByte[3] & 0xff);
+    Byte byte[8];
+    for (int i = 4 ; i < 12 ; i++) {
+        byte[i - 4] = deviceByte[i];
+    }
+    NSString * macName = [HmUtils mac2String:byte];
+    NSLog(@"--%d--%d----",index,deviceType);
+    HMSubDevice * subDevice = [[HMSubDevice alloc]initWithDeviceMac:macName deviceType:deviceType index:index deviceName:macName];
+    //        todo : 保存数据？？？？
+    Byte dataByte[len - 12];
+    for (int i = 0 ; i < len - 12 ; i++) {
+        dataByte[i] = deviceByte[i+12];
+        NSLog(@"%hhu",dataByte[i]);
+    }
+    HMSSBase * hmBase =[self gatewaySSDecoder:subDevice andByte:dataByte];
+    NSDictionary * dic = @{@"hmSSbase":hmBase};
+    if (success) {
+        success(dic);
+    }
+}
+
+
+#pragma mark 子设备SS属性及其回调
+/**
+ * 网关子设备SS属性
+ */
+- (void)gatewaySubSS:(HMDevice *)hmDevice andByte:(Byte *)deviceByte andByteLen:(NSInteger)len successBlock:(CallBackBlcok)success errorBlock:(errorBlcok)error{
+    int index = (deviceByte[0] & 0xff) << 8 | (deviceByte[1] & 0xff);
+    HMSubDevice *subDevice = [[HMSubDevice alloc]init];
+    subDevice = [HMSubDeviceManage getDeviceWithIndex:index key:@"HMDecoder"];
+    if (subDevice == nil || len < 2) {
+        return;
+    }
+    Byte datas[len - 2];
+    for (int i = 0 ; i < len - 2; i++) {
+        datas[i] = deviceByte[i+2];
+    }
+    HMSSBase * hmSSbase = [[HMSSBase alloc]init];
+    hmSSbase = [self gatewaySSDecoder:subDevice andByte:datas];
+    if (hmSSbase) {
+        NSDictionary * dic =@{@"hmDeviceInfo" : hmSSbase};
+        success(dic);
+    }
+}
+
+/**
+ * 子设备SS解析
+ */
+- (HMSSBase *)gatewaySSDecoder:(HMSubDevice *)hmSubDevice andByte:(Byte *)deviceData{
+    NSData *data = [NSData dataWithBytes:deviceData length:5];
+    NSLog(@"%@",data);
+    HMSSBase * hmSSBase = [[HMSSBase alloc]init];
+    switch (hmSubDevice.deviceType) {
+        case DEVICE_TYPE_ZIGBEE_RGB:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            hmSSBase.LE = [HmUtils intType:deviceData[2]];
+            hmSSBase.CR = (deviceData[3] & 0xff) << 8 | (deviceData[4] & 0xff);
+            hmSSBase.CG = (deviceData[5] & 0xff) << 8 | (deviceData[6] & 0xff);
+            hmSSBase.CB = (deviceData[7] & 0xff) << 8 | (deviceData[8] & 0xff);
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_DOORS:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_WATER:{
+           
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSSBase.isOnline = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_PIR:
+        {
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SMOKE:
+        {
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SW:
+        {
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SHOCK:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                 hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_THP:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            hmSSBase.BP = (NSInteger)[HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_GAS:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSSBase.isOnline = NO;
+            }
+            hmSSBase.isBpAlarm = YES;
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                hmSSBase.onoff = 1;
+            }else{
+                hmSSBase.onoff = 0;
+            }
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_CO:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSSBase.isOnline = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2] && [HmUtils readFlagsBit:deviceData[0] andIndex:3]) {
+                hmSSBase.onoff = 3;
+            }else{
+                if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                    hmSSBase.onoff = 1;
+                }else if ([HmUtils readFlagsBit:deviceData[0] andIndex:3]){
+                    hmSSBase.onoff = 2;
+                }else{
+                    hmSSBase.onoff = 0;
+                }
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOS:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                hmSSBase.onoff = 1;
+            }else{
+                hmSSBase.onoff = 0;
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+             break;
+        case DEVICE_TYPE_ZIGBEE_PLUGIN:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            hmSSBase.RO = [HmUtils intType:deviceData[1]];
+            hmSSBase.UO = [HmUtils intType:deviceData[2]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:3];
+        }
+             break;
+        case DEVICE_TYPE_ZIGBEE_METRTING_PLUGIN:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.RO = [HmUtils intType:deviceData[1]];
+            hmSSBase.PW = [NSString stringWithFormat:@"%d",(int)[self intByByteFour:deviceData andNum:2]];
+            hmSSBase.ET = [NSString stringWithFormat:@"%ld",(long)[self longByByteFour:deviceData andNum:6]];
+            hmSSBase.PW = [NSString stringWithFormat:@"%d",(int)[self intByByteFour:deviceData andNum:14]];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_ONE_ONOFF:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.onoff1 = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_TWO_ONOFF:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:1]) {
+                hmSSBase.onoff1 = 1;
+            }else{
+                hmSSBase.onoff1 = 0;
+            }
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:2]) {
+                hmSSBase.onoff2 = 1;
+            }else{
+                hmSSBase.onoff2 = 0;
+            }
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_THREE_ONOFF:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:1]) {
+                hmSSBase.onoff1 = 1;
+            }else{
+                hmSSBase.onoff1 = 0;
+            }
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:2]) {
+                hmSSBase.onoff2 = 1;
+            }else{
+                hmSSBase.onoff2 = 0;
+            }
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:3]) {
+                hmSSBase.onoff3 = 1;
+            }else{
+                hmSSBase.onoff3 = 0;
+            }
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_FOUR_WHEEL:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:1]) {
+                hmSSBase.onoff1 = 1;
+            }else{
+                hmSSBase.onoff1 = 0;
+            }
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:2]) {
+                hmSSBase.onoff2 = 1;
+            }else{
+                hmSSBase.onoff2 = 0;
+            }
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:3]) {
+                hmSSBase.onoff3 = 1;
+            }else{
+                hmSSBase.onoff3 = 0;
+            }
+            if ([HmUtils readFlagsBit:deviceData[1] andIndex:3]) {
+                hmSSBase.onoff4 = 1;
+            }else{
+                hmSSBase.onoff4 = 0;
+            }
+            hmSSBase.LEL1 = [HmUtils intType:deviceData[2]];
+            hmSSBase.LEL2 = [HmUtils intType:deviceData[3]];
+            hmSSBase.LEL3 = [HmUtils intType:deviceData[4]];
+            hmSSBase.LEL4 = [HmUtils intType:deviceData[5]];
+            hmSSBase.CW1  = [HmUtils intType:deviceData[6] >> 4] & 0xff;
+            hmSSBase.CW2  = [HmUtils intType:deviceData[6] >> 4] & 0xff;
+            hmSSBase.CW3  = [HmUtils intType:deviceData[7] >> 4] & 0xff;
+            hmSSBase.CW4  = [HmUtils intType:deviceData[7] >> 4] & 0xff;
+            hmSSBase.TM   = [self intByByteFour:deviceData andNum:8];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_RC:
+            break;
+        case DEVICE_TYPE_ZIGBEE_RELAY:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            hmSSBase.TM = (NSInteger)[self intByByteFour:deviceData andNum:2];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_SOUND_AND_LIGHT_ALARM:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            hmSSBase.isBpAlarm = YES;
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                hmSSBase.onoff = 1;
+            }else{
+                hmSSBase.onoff = 0;
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.DT = [self intByByteFour:deviceData andNum:2];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:6];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_ILLUMINANCE:
+            break;
+        case DEVICE_TYPE_ZIGBEE_AIR:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.HY = [NSString stringWithFormat:@"%d",(deviceData[2] & 0xff) << 8 | (deviceData[3] & 0xff)];
+            hmSSBase.TP = [NSString stringWithFormat:@"%d",(deviceData[4] & 0xff) << 8 | (deviceData[5] & 0xff)];
+            hmSSBase.TV = (deviceData[5] & 0xff) << 8 | (deviceData[6] & 0xff);
+            hmSSBase.P2 = (deviceData[7] & 0xff) << 8 | (deviceData[8] & 0xff);
+            hmSSBase.CC = (deviceData[9] & 0xff) << 8 | (deviceData[10] & 0xff);
+            hmSSBase.AQ = (deviceData[11] & 0xff) << 8 | (deviceData[12] & 0xff);
+            hmSSBase.P1 = (deviceData[13] & 0xff) << 8 | (deviceData[14] & 0xff);
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:15];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_THERMOSTAT:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            hmSSBase.TP = [NSString stringWithFormat:@"%d",(deviceData[2] & 0xff) << 8 | (deviceData[3] & 0xff)];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:4];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_CURTAIN_CONTROLLER:{
+            int online = [HmUtils intType:deviceData[0]];
+            if (online == 1) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+            }
+            //TODO： 缓存上报的子设备数据信息
+            hmSSBase.onoff = [HmUtils intType:deviceData[1]];
+            hmSSBase.MA = [HmUtils intType:deviceData[2]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:3];
+        }
+            break;
+        case DEVICE_TYPE_ZIGBEE_INTELLIGENT_DOOR_LOCK:{
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:0]) {
+                hmSubDevice.isOnline = YES;
+                hmSSBase.isOnline = YES;
+                //TODO： 缓存上报的子设备数据信息
+            }else{
+                hmSubDevice.isOnline = NO;
+                hmSSBase.isOnline = NO;
+                //TODO： 缓存上报的子设备数据信息
+            }
+            hmSSBase.isBpAlarm = YES;
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:1]) {
+                hmSSBase.isBpAlarm = YES;
+            }else{
+                hmSSBase.isBpAlarm = NO;
+            }
+            if ([HmUtils readFlagsBit:deviceData[0] andIndex:2]) {
+                hmSSBase.onoff = 1;
+            }else{
+                hmSSBase.onoff = 0;
+            }
+            hmSSBase.BP = [HmUtils intType:deviceData[1]];
+            hmSSBase.OT = [HmUtils intType:deviceData[2]];
+            hmSSBase.ID = [HmUtils intType:deviceData[3]];
+            hmSSBase.IN = [HmUtils intType:deviceData[4]];
+            hmSSBase.TM = [self intByByteFour:deviceData andNum:5];
+            hmSSBase.RE = [HmUtils intType:deviceData[9]];
+        }
+            break;
+        default:
+            break;
+    }
+    return hmSSBase;
+}
+
+
+#pragma mark RC错误码回调
+
+- (void)dataErrorWithrc:(NSInteger)rc errorBlock:(errorBlcok)error{
+    switch (rc) {
+        case UNKNOWN_ERROR:
+            error(0);
+            break;
+        case PARAMETER_ERROR:
+            error(3);
+            break;
+        case DECRYPTION_FAILURE:
+            error(4);
+            break;
+        case CID_DOES_NOT_EXIST:
+            error(-4);
+            break;
+        case THE_OID_DOES_NOT_EXIST:
+            error(-3);
+            break;
+        case PL_CANNOT_BE_EMPTY:
+            error(-5);
+            break;
+        case TEID_CANNOT_BE_EMPTY:
+            error(-6);
+            break;
+        case WIFI_GAS_PREHEATING:
+            error(-10000);
+            break;
+        case APP_SEND:
+            error(0xffff);
+            break;
+        default:
+            break;
+    }
+}
+
+- (NSInteger)intByByteFour:(Byte *)byte andNum:(NSInteger)index{
+    Byte byteTM[4];
+    byteTM[0] = byte[index];
+    byteTM[1] = byte[index+1];
+    byteTM[2] = byte[index+2];
+    byteTM[3] = byte[index+3];
+    return (NSInteger)[HmUtils bytesToInt2:byteTM];
+}
+- (NSInteger)longByByteFour:(Byte *)byte andNum:(NSInteger)index{
+    Byte byteTM[8];
+    byteTM[0] = byte[index];
+    byteTM[1] = byte[index+1];
+    byteTM[2] = byte[index+2];
+    byteTM[3] = byte[index+3];
+    byteTM[4] = byte[index+4];
+    byteTM[5] = byte[index+5];
+    byteTM[6] = byte[index+6];
+    byteTM[7] = byte[index+7];
+    return (NSInteger)[HmUtils bytes2long:byteTM];
+}
+
+
+
+@end

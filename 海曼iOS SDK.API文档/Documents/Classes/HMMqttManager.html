@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>HMMqttManager Class Reference</title>
+
+	<link rel="stylesheet" href="../css/style.css">
+	<meta name="viewport" content="initial-scale=1, maximum-scale=1.4">
+	<meta name="generator" content="appledoc 2.2.1 (build 1334)">
+</head>
+<body class="appledoc">
+	<header>
+		<div class="container" class="hide-in-xcode">
+			
+			<h1 id="library-title">
+				<a href="../index.html">MQTTHJ </a>
+			</h1>
+
+			<p id="developer-home">
+				<a href="../index.html">heimaniOS</a>
+			</p>
+			
+		</div>
+	</header>
+
+	<aside>
+		<div class="container">
+			<nav>
+				<ul id="header-buttons" role="toolbar">
+					<li><a href="../index.html">Index</a></li>
+<li><a href="../hierarchy.html">Hierarchy</a></li>
+
+					<li id="on-this-page" role="navigation">
+						<label>
+							On This Page
+
+							<div class="chevron">
+								<div class="chevy chevron-left"></div>
+								<div class="chevy chevron-right"></div>
+							</div>
+
+							<select id="jump-to">
+	<option value="top">Jump To&#133;</option>
+	
+
+	
+	
+	<option value="tasks">Tasks</option>
+	
+	
+
+	
+	
+	<optgroup label="Properties">
+		
+		<option value="//api/name/delegate">delegate</option>
+		
+	</optgroup>
+	
+
+	
+	<optgroup label="Class Methods">
+		
+		<option value="//api/name/manager">+ manager</option>
+		
+	</optgroup>
+	
+
+	
+	<optgroup label="Instance Methods">
+		
+		<option value="//api/name/addSubDevice:hmDevice:successBlock:hmMqttError:errorBlock:">- addSubDevice:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/close">- close</option>
+		
+		<option value="//api/name/connectWithHost:port:">- connectWithHost:port:</option>
+		
+		<option value="//api/name/deleteSubDeviceWithIndex:hmDevice:successBlock:hmMqttError:errorBlock:">- deleteSubDeviceWithIndex:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/disconnect">- disconnect</option>
+		
+		<option value="//api/name/getAlarmTimerInformationWithHmDevice:successBlock:hmMqttError:errorBlock:">- getAlarmTimerInformationWithHmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/getDeviceEditionInformationWithHmDevice:successBlock:hmMqttError:coderErrorBlock:">- getDeviceEditionInformationWithHmDevice:successBlock:hmMqttError:coderErrorBlock:</option>
+		
+		<option value="//api/name/getGatewayParametersWithHmDevice:successBlock:hmMqttError:errorBlock:">- getGatewayParametersWithHmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/getSecretKeyWithHmDevice:successBlock:hmMqttError:coderErrorBlock:">- getSecretKeyWithHmDevice:successBlock:hmMqttError:coderErrorBlock:</option>
+		
+		<option value="//api/name/getSubDeviceInfoWithSubIndex:andCmd:hmDevice:successBlock:hmMqttError:errorBlock:">- getSubDeviceInfoWithSubIndex:andCmd:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/getZBDeviceSingleStateAndSubIndex:andNumber:hmDevice:successBlock:hmMqttError:errorBlock:">- getZBDeviceSingleStateAndSubIndex:andNumber:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/initSDK">- initSDK</option>
+		
+		<option value="//api/name/setAlarmTimerWithWitType:andHmTimer:hmDevice:successBlock:hmMqttError:errorBlock:">- setAlarmTimerWithWitType:andHmTimer:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setDevicePropertyWithSubDeviceType:subIndex:deviceInfo:hmDevice:successBlock:hmMqttError:errorBlock:">- setDevicePropertyWithSubDeviceType:subIndex:deviceInfo:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setGatewayIp:hmDevice:successBlock:hmMqttError:errorBlock:">- setGatewayIp:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setGatewayParametersWithInfo:HmDevice:successBlock:hmMqttError:errorBlock:">- setGatewayParametersWithInfo:HmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setHomeDefenseWithSubDeviceList:hmDevice:successBlock:hmMqttError:errorBlock:">- setHomeDefenseWithSubDeviceList:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setLightSwitchWithonoff:hmDevice:successBlock:hmMqttError:errorBlock:">- setLightSwitchWithonoff:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setLinkNightLightWithSubList:enable:hmDevice:successBlock:hmMqttError:errorBlock:">- setLinkNightLightWithSubList:enable:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/setTimerZoneWithHmDevice:successBlock:hmMqttError:errorBlock:">- setTimerZoneWithHmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+		<option value="//api/name/subscribeLastWordsWithHmDevice:andHmMqttError:">- subscribeLastWordsWithHmDevice:andHmMqttError:</option>
+		
+		<option value="//api/name/subscribeWithHmDevice:andHmMqttError:">- subscribeWithHmDevice:andHmMqttError:</option>
+		
+		<option value="//api/name/unsubscribeWithHmDevice:andHmMqttError:">- unsubscribeWithHmDevice:andHmMqttError:</option>
+		
+		<option value="//api/name/updateFirmwareWithDeviceType:enable:zigBeeType:hmDevice:successBlock:hmMqttError:errorBlock:">- updateFirmwareWithDeviceType:enable:zigBeeType:hmDevice:successBlock:hmMqttError:errorBlock:</option>
+		
+	</optgroup>
+	
+	
+</select>
+						</label>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</aside>
+
+	<article>
+		<div id="overview_contents" class="container">
+			<div id="content">
+				<main role="main">
+					<h1 class="title">HMMqttManager Class Reference</h1>
+
+					
+					<div class="section section-specification"><table cellspacing="0"><tbody>
+						<tr>
+	<th>Inherits from</th>
+	<td>NSObject</td>
+</tr><tr>
+	<th>Declared in</th>
+	<td>HMMqttManager.h</td>
+</tr>
+						</tbody></table></div>
+					
+
+                    
+
+					
+					
+					<div class="section section-tasks">
+						<a title="Tasks" name="tasks"></a>
+						
+
+						
+						
+
+						<div class="task-list">
+							<div class="section-method">
+	<a name="//api/name/delegate" title="delegate"></a>
+	<h3 class="method-title"><code><a href="#//api/name/delegate">&nbsp;&nbsp;delegate</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>HMMqttManager代理</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>@property (nonatomic, weak) id&lt;HMMQTTDelegate&gt; delegate</code></div>
+
+		    
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>HMMqttManager代理</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/manager" title="manager"></a>
+	<h3 class="method-title"><code><a href="#//api/name/manager">+&nbsp;manager</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>单例</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>+ (instancetype)manager</code></div>
+
+		    
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>单例</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/initSDK" title="initSDK"></a>
+	<h3 class="method-title"><code><a href="#//api/name/initSDK">&ndash;&nbsp;initSDK</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>初始化mqtt</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)initSDK</code></div>
+
+		    
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>初始化mqtt</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/close" title="close"></a>
+	<h3 class="method-title"><code><a href="#//api/name/close">&ndash;&nbsp;close</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>关闭mqtt</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)close</code></div>
+
+		    
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>关闭mqtt</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/connectWithHost:port:" title="connectWithHost:port:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/connectWithHost:port:">&ndash;&nbsp;connectWithHost:port:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>连接MQTT</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (BOOL)connectWithHost:(NSString *)<em>host</em> port:(UInt32)<em>port</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>host</code></th>
+						<td><p>MQTT_ip地址</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>port</code></th>
+						<td><p>端口号</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+			<div class="method-subsection return">
+				<h4 class="method-subtitle parameter-title">Return Value</h4>
+				<p>是否连接成功</p>
+			</div>
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>连接MQTT</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/disconnect" title="disconnect"></a>
+	<h3 class="method-title"><code><a href="#//api/name/disconnect">&ndash;&nbsp;disconnect</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>断开连接</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)disconnect</code></div>
+
+		    
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>断开连接</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/subscribeWithHmDevice:andHmMqttError:" title="subscribeWithHmDevice:andHmMqttError:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/subscribeWithHmDevice:andHmMqttError:">&ndash;&nbsp;subscribeWithHmDevice:andHmMqttError:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>订阅主题</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)subscribeWithHmDevice:(HMDevice *)<em>hmDevice</em> andHmMqttError:(hmMqttError)<em>hmMqttError</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备属性 (主题构成 : （deviceMac:设备mac地址）+（factoryID:厂商ID）+（pid:产品id）)</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>订阅主题</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/subscribeLastWordsWithHmDevice:andHmMqttError:" title="subscribeLastWordsWithHmDevice:andHmMqttError:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/subscribeLastWordsWithHmDevice:andHmMqttError:">&ndash;&nbsp;subscribeLastWordsWithHmDevice:andHmMqttError:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>订阅遗言</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)subscribeLastWordsWithHmDevice:(HMDevice *)<em>hmDevice</em> andHmMqttError:(hmMqttError)<em>hmMqttError</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备属性 (遗言构成 : （deviceMac:设备mac地址）+（factoryID:厂商ID）+（pid:产品id）)</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>订阅遗言</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/unsubscribeWithHmDevice:andHmMqttError:" title="unsubscribeWithHmDevice:andHmMqttError:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/unsubscribeWithHmDevice:andHmMqttError:">&ndash;&nbsp;unsubscribeWithHmDevice:andHmMqttError:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>取消订阅</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)unsubscribeWithHmDevice:(HMDevice *)<em>hmDevice</em> andHmMqttError:(hmMqttError)<em>hmMqttError</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备属性 (遗言构成 : （deviceMac:设备mac地址）+（factoryID:厂商ID）+（pid:产品id）)</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>取消订阅</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/getSecretKeyWithHmDevice:successBlock:hmMqttError:coderErrorBlock:" title="getSecretKeyWithHmDevice:successBlock:hmMqttError:coderErrorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/getSecretKeyWithHmDevice:successBlock:hmMqttError:coderErrorBlock:">&ndash;&nbsp;getSecretKeyWithHmDevice:successBlock:hmMqttError:coderErrorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>获取密钥</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)getSecretKeyWithHmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> coderErrorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性 （具体可根据 HMDevice这个类的注解、文档、Demo进行操作</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>获取密钥</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/getDeviceEditionInformationWithHmDevice:successBlock:hmMqttError:coderErrorBlock:" title="getDeviceEditionInformationWithHmDevice:successBlock:hmMqttError:coderErrorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/getDeviceEditionInformationWithHmDevice:successBlock:hmMqttError:coderErrorBlock:">&ndash;&nbsp;getDeviceEditionInformationWithHmDevice:successBlock:hmMqttError:coderErrorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>获取设备的版本信息</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)getDeviceEditionInformationWithHmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> coderErrorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>获取设备的版本信息</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/getGatewayParametersWithHmDevice:successBlock:hmMqttError:errorBlock:" title="getGatewayParametersWithHmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/getGatewayParametersWithHmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;getGatewayParametersWithHmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>获取网关的参数信息</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)getGatewayParametersWithHmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>获取网关的参数信息</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setGatewayParametersWithInfo:HmDevice:successBlock:hmMqttError:errorBlock:" title="setGatewayParametersWithInfo:HmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setGatewayParametersWithInfo:HmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setGatewayParametersWithInfo:HmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置网关的参数信息</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setGatewayParametersWithInfo:(HMGatewayModel *)<em>gatewayInfo</em> HmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>gatewayInfo</code></th>
+						<td><p>网关的参数信息</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置网关的参数信息</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setTimerZoneWithHmDevice:successBlock:hmMqttError:errorBlock:" title="setTimerZoneWithHmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setTimerZoneWithHmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setTimerZoneWithHmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置时区</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setTimerZoneWithHmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性（具体可根据 HMDevice这个类的注解、文档、Demo进行操作）</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置时区</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setGatewayIp:hmDevice:successBlock:hmMqttError:errorBlock:" title="setGatewayIp:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setGatewayIp:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setGatewayIp:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置网关ip</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setGatewayIp:(NSString *)<em>ip</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>ip</code></th>
+						<td><p>ip地址</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性（具体可根据 HMDevice这个类的注解、文档、Demo进行操作）</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置网关ip</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/updateFirmwareWithDeviceType:enable:zigBeeType:hmDevice:successBlock:hmMqttError:errorBlock:" title="updateFirmwareWithDeviceType:enable:zigBeeType:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/updateFirmwareWithDeviceType:enable:zigBeeType:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;updateFirmwareWithDeviceType:enable:zigBeeType:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>固件升级</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)updateFirmwareWithDeviceType:(NSInteger)<em>fType</em> enable:(Boolean)<em>enable</em> zigBeeType:(NSInteger)<em>zType</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>fType</code></th>
+						<td><p>值0x01,为wifi固件；值0x02,为ZigBee协调器固件；值0x03,为ZigBee子设备固件；值0x04,为声音升级</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>enable</code></th>
+						<td><p>2表示允许更新，否则不允许更新 device 设备属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>zType</code></th>
+						<td><p>设备类型当升级设备类型为zigbee子设备有时效。</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>固件升级</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setLinkNightLightWithSubList:enable:hmDevice:successBlock:hmMqttError:errorBlock:" title="setLinkNightLightWithSubList:enable:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setLinkNightLightWithSubList:enable:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setLinkNightLightWithSubList:enable:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置联动小夜灯设备</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setLinkNightLightWithSubList:(NSArray *)<em>subList</em> enable:(BOOL)<em>enable</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>subList</code></th>
+						<td><p>子设备的index列表</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>enable</code></th>
+						<td><p>01使能,00禁能；</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置联动小夜灯设备</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setHomeDefenseWithSubDeviceList:hmDevice:successBlock:hmMqttError:errorBlock:" title="setHomeDefenseWithSubDeviceList:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setHomeDefenseWithSubDeviceList:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setHomeDefenseWithSubDeviceList:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置网关在家庭布防模式下报警子设备</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setHomeDefenseWithSubDeviceList:(NSArray *)<em>sublist</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>sublist</code></th>
+						<td><p>子设备的index列表</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置网关在家庭布防模式下报警子设备</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setLightSwitchWithonoff:hmDevice:successBlock:hmMqttError:errorBlock:" title="setLightSwitchWithonoff:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setLightSwitchWithonoff:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setLightSwitchWithonoff:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>一键控制ZIGBEE灯</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setLightSwitchWithonoff:(NSInteger)<em>onoff</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>onoff</code></th>
+						<td><p>1控制zigbee灯全开（若为0则控制zigbee灯全关）</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>一键控制ZIGBEE灯</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setAlarmTimerWithWitType:andHmTimer:hmDevice:successBlock:hmMqttError:errorBlock:" title="setAlarmTimerWithWitType:andHmTimer:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setAlarmTimerWithWitType:andHmTimer:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setAlarmTimerWithWitType:andHmTimer:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置撤、布防、在家布防定时器</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setAlarmTimerWithWitType:(NSInteger)<em>type</em> andHmTimer:(HMTimer *)<em>hmTimer</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>type</code></th>
+						<td><p>1为在家布放 2为外出布放 0撤防</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmTimer</code></th>
+						<td><p>海曼定时器</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置撤、布防、在家布防定时器</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/getAlarmTimerInformationWithHmDevice:successBlock:hmMqttError:errorBlock:" title="getAlarmTimerInformationWithHmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/getAlarmTimerInformationWithHmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;getAlarmTimerInformationWithHmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>获取撤、布防、在家布防定时器信息</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)getAlarmTimerInformationWithHmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>获取撤、布防、在家布防定时器信息</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/addSubDevice:hmDevice:successBlock:hmMqttError:errorBlock:" title="addSubDevice:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/addSubDevice:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;addSubDevice:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>子设备入网</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)addSubDevice:(BOOL)<em>enable</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>enable</code></th>
+						<td><p>是否允许入网  YES / NO</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>子设备入网</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/deleteSubDeviceWithIndex:hmDevice:successBlock:hmMqttError:errorBlock:" title="deleteSubDeviceWithIndex:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/deleteSubDeviceWithIndex:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;deleteSubDeviceWithIndex:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>删除子设备</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)deleteSubDeviceWithIndex:(NSInteger)<em>subIndex</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>subIndex</code></th>
+						<td><p>子设备index</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>删除子设备</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/setDevicePropertyWithSubDeviceType:subIndex:deviceInfo:hmDevice:successBlock:hmMqttError:errorBlock:" title="setDevicePropertyWithSubDeviceType:subIndex:deviceInfo:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/setDevicePropertyWithSubDeviceType:subIndex:deviceInfo:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;setDevicePropertyWithSubDeviceType:subIndex:deviceInfo:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>设置子设备属性</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)setDevicePropertyWithSubDeviceType:(DEVICE_TYPE)<em>type</em> subIndex:(NSInteger)<em>subIndex</em> deviceInfo:(NSObject *)<em>object</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>type</code></th>
+						<td><p>设备类型 参考:Enum.h 文件</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>subIndex</code></th>
+						<td><p>设备索引 device 设备属性(服务器获取)</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>object</code></th>
+						<td><p>设备信息 ：子设备对象的各项属性，参考classModel各对象</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>设置子设备属性</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/getSubDeviceInfoWithSubIndex:andCmd:hmDevice:successBlock:hmMqttError:errorBlock:" title="getSubDeviceInfoWithSubIndex:andCmd:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/getSubDeviceInfoWithSubIndex:andCmd:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;getSubDeviceInfoWithSubIndex:andCmd:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>获取子设备数据</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)getSubDeviceInfoWithSubIndex:(NSInteger)<em>subIndex</em> andCmd:(NSInteger)<em>cmd</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>subIndex</code></th>
+						<td><p>子设备Index索引</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>cmd</code></th>
+						<td><p>设备属性 参考:Enum.h 文件 &ndash;宏</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>获取子设备数据</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div><div class="section-method">
+	<a name="//api/name/getZBDeviceSingleStateAndSubIndex:andNumber:hmDevice:successBlock:hmMqttError:errorBlock:" title="getZBDeviceSingleStateAndSubIndex:andNumber:hmDevice:successBlock:hmMqttError:errorBlock:"></a>
+	<h3 class="method-title"><code><a href="#//api/name/getZBDeviceSingleStateAndSubIndex:andNumber:hmDevice:successBlock:hmMqttError:errorBlock:">&ndash;&nbsp;getZBDeviceSingleStateAndSubIndex:andNumber:hmDevice:successBlock:hmMqttError:errorBlock:</a></code>
+</h3>
+
+	<div class="method-info">
+		<div class="pointy-thing"></div>
+
+		<div class="method-info-container">
+			
+			
+			<div class="method-subsection brief-description">
+				<p>获取ZB设备单项状态值</p>
+			</div>
+			
+		    
+
+			<div class="method-subsection method-declaration"><code>- (void)getZBDeviceSingleStateAndSubIndex:(NSInteger)<em>index</em> andNumber:(NSInteger)<em>number</em> hmDevice:(HMDevice *)<em>hmDevice</em> successBlock:(CallBackBlcok)<em>success</em> hmMqttError:(hmMqttError)<em>hmMqttError</em> errorBlock:(hmCoderError)<em>error</em></code></div>
+
+		    
+			
+			<div class="method-subsection arguments-section parameters">
+				<h4 class="method-subtitle parameter-title">Parameters</h4>
+				<table class="argument-def parameter-def">
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>index</code></th>
+						<td><p>子设备Index索引</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>number</code></th>
+						<td><p>子设备属性下标 参考协议</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmDevice</code></th>
+						<td><p>设备的相关属性</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>success</code></th>
+						<td><p>mqtt返回消息回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>hmMqttError</code></th>
+						<td><p>Mqtt相关错误码回调</p></td>
+					</tr>
+				
+					<tr>
+						<th scope="row" class="argument-name"><code>error</code></th>
+						<td><p>参数信息错误码回调</p></td>
+					</tr>
+				
+				</table>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection discussion-section">
+				<h4 class="method-subtitle">Discussion</h4>
+				<p>获取ZB设备单项状态值</p>
+			</div>
+			
+
+			
+
+			
+
+			
+			<div class="method-subsection declared-in-section">
+				<h4 class="method-subtitle">Declared In</h4>
+				<p><code class="declared-in-ref">HMMqttManager.h</code></p>
+			</div>
+			
+			
+		</div>
+	</div>
+</div>
+						</div>
+						
+					</div>
+					
+					
+
+                    
+                    
+          
+				</main>
+
+				<footer>
+					<div class="footer-copyright">
+						
+						<p class="copyright">Copyright &copy; 2018 heimaniOS. All rights reserved. Updated: 2018-01-30</p>
+						
+						
+						<p class="generator">Generated by <a href="http://appledoc.gentlebytes.com">appledoc 2.2.1 (build 1334)</a>.</p>
+						
+					</div>
+				</footer>
+			</div>
+		</div>
+	</article>
+
+	<script src="../js/script.js"></script>
+</body>
+</html>

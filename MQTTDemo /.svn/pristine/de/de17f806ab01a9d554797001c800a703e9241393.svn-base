@@ -1,0 +1,248 @@
+//
+//  HMHttpManage.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/22.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "HMUserInfo.h"
+
+@interface HMHttpManage : NSObject
+
+/**
+ * 用户注册
+ *
+ * @param user         用户账号
+ * @param password     用户密码
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)onRegisterWithUser:(NSString *)user password:(NSString *)password success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+/**
+ * 用户登录
+ *
+ * @param user         用户账号
+ * @param password     用户密码
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)userLoginWithUser:(NSString *)user password:(NSString *)password success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 刷新凭证
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)refreshTokenSuccess:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 忘记密码
+ * @param user         用户账号
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onForgetPasswordWithUser:(NSString *)user success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 修改用户信息
+ * @param userInfo     用户信息
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)upChangeInfoWithUserInfo:(HMUserInfo *)userInfo success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+
+/**
+ * 注册设备到服务器
+ *
+ * @param pid         产品id
+ * @param mac         设备mac
+ * @param mcuVersion  设备版本号
+ * @param wifiVersion WiFi设备版本号
+ * @param name        设备名称
+ */
++ (void)onRegisterDeviceWithPid:(NSString *)pid mac:(NSString *)mac mcuVersion:(NSString *)mcuVersion wifiVersion:(NSString *)wifiVersion name:(NSString *)name success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 绑定设备
+ *
+ * @param deviceId     设备ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)onSubscribeDeviceWithDeviceId:(NSString *)deviceId success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 解除绑定设备
+ *
+ * @param deviceId     设备ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)onUnSubscribeDeviceWithDeviceId:(NSString *)deviceId success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 获取WiFi设备列表
+ *
+ * @param offset       请求的偏移量 默认为0
+ * @param limit        请求的数量上限 默认为100
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)getWiFDeviceslistWithOffset:(NSString *)offset limit :(NSString *)limit success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 获取子设备
+ *
+ * @param offset       请求的偏移量 默认为0
+ * @param limit        请求的数量上限 默认为100
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)getSubDevicesWithOffset:(NSString *)offset limit:(NSString *)limit andDeviceId:(NSString *)deviceId success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 创建场景
+ * @param sceneName    场景名称
+ * @param sceneIcon    场景图标地址
+ * @param countTime    延迟时间
+ * @param execList     [
+ *                     {
+ *                     "deviceId": "* 设备ID",
+ *                     "subIndex": "子设备index",
+ *                     "dataEndpoint":
+ *                     {
+ *                     "key": "value",
+ *                     "key": "value"
+ *                     },
+ *                     "data": ""
+ *                     }
+ *                     ]
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onSceneCreateWithSceneName:(NSString *)sceneName limit:(NSString *)sceneIcon countTime:(NSString *)countTime execList:(NSString *)execList success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 删除场景
+ * @param sceneID      场景ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onSceneDeleceWithSceneID:(NSString *)sceneID success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 获取单个场景内容
+ *
+ * @param sceneID      场景ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onSceneGetIDWithSceneID:(NSString *)sceneID success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 创建联动
+ *
+ * @param linkName     联动名称
+ * @param checkEn      联动使能
+ * @param countTime    延迟时间
+ * @param conList      {
+ *                     "* type": 0,
+ *                     "deviceId": 135113,
+ *                     "subId": 135113,
+ *                     "dataEndpoint":{
+ *                     "key": "value",
+ *                     "key": "value",
+ *                     },
+ *                     "data": ""
+ *                     "TS":"1999-12-03 14:22:55"
+ *                     "WF": 255
+ *                     }
+ * @param checkList    [{
+ *                     "type": 0,
+ *                     "deviceId": 135113,
+ *                     "subIndex": 135113,
+ *                     "dataEndpoint": {
+ *                     "key": "value",
+ *                     "key": "value"
+ *                     }
+ *                     "data": ""
+ *                     "TS": "1999-12-03 14:22:55"
+ *                     "TE":"1999-12-03 14:22:55"
+ *                     "WF": 255
+ *                     }]
+ * @param execList     [{
+ *                     "type": 0,
+ *                     "sceneID": "场景ID",
+ *                     "deviceID": "设备ID",
+ *                     "subID": "子设备ID",
+ *                     "dataEndpoint": {
+ *                     "key": "value",
+ *                     "key": "value"
+ *                     }
+ *                     "data": ""
+ *                     }]
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onLinkCreateWithLinkName:(NSString *)linkName checkEn:(NSString *)checkEn countTime:(NSString *)countTime conList:(NSString *)conList checkList:(NSString *)checkList execList:(NSString *)execList success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 删除联动场景
+ *
+ * @param linkID       场景ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onLinkDeleceWithLinkID:(NSString *)linkID success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * 获取单个场景联动
+ *
+ * @param linkID       联动ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onLinkGetIDWithLinkID:(NSString *)linkID success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ *
+ * OTA查询
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
++ (void)onOtaGetMsgWithPid:(NSString *)pid deviceID:(NSString *)deviceID info:(NSString *)info  type:(NSString *)type success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+
+
+/**
+ * 修改设备信息
+ *
+ * @param name         设备名称
+ * @param deviceId     设备ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)onChangeDeviceWithName:(NSString *)name deviceId:(NSInteger )deviceId success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+/**
+ * OTA升级确认
+ *
+ * @param otaId        升级ID
+ * @param deviceId     设备ID
+ * @param success      成功回调
+ * @param failure      失败回调
+ */
+
++ (void)onOTAConfirmWithOtaId:(NSString *)otaId deviceId:(NSInteger )deviceId success:(void (^)(id data))success failure:(void (^)(NSError * error))failure;
+
+@end

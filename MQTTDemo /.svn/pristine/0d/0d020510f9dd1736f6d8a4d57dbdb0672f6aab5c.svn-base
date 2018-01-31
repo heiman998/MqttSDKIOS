@@ -1,0 +1,21 @@
+//
+//  HMBaseTLV.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/6.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface HMBaseTLV : NSObject
+
+@property (nonatomic, assign)NSInteger action;     //动作
+
+@property (nonatomic, assign)NSInteger encrptType; //加密类型
+
+//@property (nonatomic, strong)NSData  *  pass;      //透传数据
+
+@property (nonatomic)Byte * pass;
+
+@end

@@ -1,0 +1,55 @@
+//
+//  HMSubDevice.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/25.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import "HMSubDevice.h"
+
+@implementation HMSubDevice
+
+//+ (instancetype)hmSubDeviceWithDict:(NSDictionary *)dict
+//{
+//    HMSubDevice *model = [[HMSubDevice alloc] init];
+//    [model setValuesForKeysWithDictionary:dict];
+//    return model;
+//}
+
+- (instancetype)initWithDeviceMac:(NSString *)deviceMac
+                       deviceType:(NSInteger)deviceType
+                            index:(NSInteger)index
+                       deviceName:(NSString *)deviceName{
+    
+    self = [super init];
+    if (self) {
+        self.deviceMac = deviceMac;
+        self.deviceType = deviceType;
+        self.index = index;
+        self.deviceName = deviceName;
+    }
+    return self;
+}
+
+-(void)encodeWithCoder:(NSCoder *)aCoder{
+    
+    [aCoder encodeObject:_deviceMac forKey:@"HM_sub_deviceMac"];
+    [aCoder encodeInteger: _deviceType forKey:@"HM_sub_deviceType"];
+    [aCoder encodeInteger:_index forKey:@"HM_sub_index"];
+    [aCoder encodeObject:_deviceName forKey:@"HM_sub_deviceName"];
+}
+
+-(nullable instancetype)initWithCoder:(NSCoder *)aDecoder{
+    
+    if (self = [super init]) {
+         _deviceMac = [aDecoder decodeObjectForKey:@"HM_sub_deviceMac"];
+         _deviceType = [aDecoder decodeIntegerForKey:@"HM_sub_deviceType"];
+         _index = [aDecoder decodeIntegerForKey:@"HM_sub_index"];
+         _deviceName = [aDecoder decodeObjectForKey:@"HM_sub_deviceName"];
+    }
+    return self;
+}
+
+
+@end

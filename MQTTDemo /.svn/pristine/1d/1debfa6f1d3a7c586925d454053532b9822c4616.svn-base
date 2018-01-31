@@ -1,0 +1,25 @@
+//
+//  HmConstant.h
+//  HmMqttSdk
+//
+//  Created by mac on 2017/11/29.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+extern NSString *const CLIENID_A;
+extern NSString *const CLIENID_B;
+extern NSString *const CLIENID_C;
+extern NSString *const CLIENID_D;
+extern NSString *const CLIENID_E;
+extern NSString *const CLIENID_F;
+extern NSString *const CLIENID_G;
+
+//static NSInteger const GET_AES_KEY = 0x0001;
+////定义全局
+//const NSString *sdasdas = @"sdsadasdsa";
+////引用
+//extern NSString *const sdasdas;
+
+

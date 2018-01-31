@@ -1,0 +1,235 @@
+//
+//  HMZigBeeDeviceModel.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/18.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import "HMZigBeeDeviceModel.h"
+
+@implementation HMZigBeeDeviceModel
+
+@end
+
+//rgb
+@implementation HMRgbLight
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _rgbOnOff  = -1 ;_brightness = -1 ;_colorR = -1 ;_colorG = -1;
+        _colorB = -1 ;
+        _rgbTimer = [[HMDeviceTimerModel alloc]init];
+    }
+    return self;
+}
+@end
+
+//智能插座（USB）
+@implementation HMPlug
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _usbOnoff   = -1;
+        _powerOnoff = -1;
+        _powerTimer = [[HMDeviceTimerModel alloc]init];
+        _usbTimer   = [[HMDeviceTimerModel alloc]init];
+    }
+    return self;
+}
+@end
+
+//计量插座（USB）
+@implementation HMMetringPlug
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _metOnoff = -1;
+        _metTimer = [[HMDeviceTimerModel alloc]init];
+    }
+    return self;
+}
+
+@end
+
+//一二三开 开关
+@implementation HMSwitch
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _onoff1 = -1;_onoff2 = -1;_onoff3 = -1;
+        _switchTimer1 = [[HMDeviceTimerModel alloc]init];
+        _switchTimer2 = [[HMDeviceTimerModel alloc]init];
+        _switchTimer3 = [[HMDeviceTimerModel alloc]init];
+    }
+    return self;
+}
+@end
+
+//四驱灯控
+@implementation HMFourLight
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _onoff1 = -1;_brightness1 = -1;_cwl1 = -1;
+        _onoff2 = -1;_brightness2 = -1;_cwl2 = -1;
+        _onoff3 = -1;_brightness3 = -1;_cwl3 = -1;
+        _onoff4 = -1;_brightness4 = -1;_cwl4 = -1;
+        _flTimer1 = [[HMDeviceTimerModel alloc]init];
+        _flTimer2 = [[HMDeviceTimerModel alloc]init];
+        _flTimer3 = [[HMDeviceTimerModel alloc]init];
+        _flTimer4 = [[HMDeviceTimerModel alloc]init];
+    }
+    return self;
+}
+@end
+
+
+//继电器
+@implementation HMRelay
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _relayOnoff = -1;
+    }
+    return self;
+}
+
+@end
+//声光警号
+@implementation HMSoundAndLightAlarm
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _slOnoff = -1; _slAlarmTime = -1;
+    }
+    return self;
+}
+@end
+
+//温湿度
+@implementation HMThp
+
+-(instancetype)init{
+    if (self = [super init]) {
+        _temUp = -1;_temLow = -1;
+        _humUp = -1;_humLow = -1;
+    }
+    return self;
+}
+
+@end
+
+
+//空气质量
+@implementation HMAir
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _ZT = -1;_BP = -1;_HY = -1;_TP = -1;_TV = -1;
+        _P2 = -1;_CC = -1;_AQ = -1;_P1 = -1;_TM = -1;
+    }
+    return self;
+}
+@end
+
+#pragma mark ------------------以下设备暂时无属性---------------------
+
+@implementation HMMagneticDoor
+//门磁
+@end
+
+@implementation HMWaterLeach
+//水浸传感器
+@end
+
+@implementation HMPir
+//红外
+@end
+
+@implementation HMSmoke
+//烟雾
+@end
+
+@implementation HMGas
+//气感
+@end
+
+@implementation HMCo
+//一氧化碳
+@end
+
+@implementation HMSos
+//报警器
+@end
+
+@implementation HMSw
+//遥控器
+@end
+
+@implementation HMRfirControll
+//红外遥控转发器
+@end
+
+@implementation HMLampHeader
+//灯头
+@end
+
+@implementation HMIlluminance
+//光照度
+@end
+
+@implementation HMThermostat
+//温控器
+@end
+
+@implementation HMShock
+//振动器
+@end
+
+@implementation HMCurtainController
+//窗帘电机
+@end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
