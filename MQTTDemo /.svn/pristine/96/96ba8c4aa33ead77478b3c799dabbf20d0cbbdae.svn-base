@@ -1,0 +1,169 @@
+//
+//  Enum.h
+//  HmMqttSdk
+//
+//  Created by mac on 2017/11/29.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+
+#ifndef Enum_h
+#define Enum_h
+
+#define GET_AES_KEY  0x0001                                    // AES秘钥
+#define DEVICE_BASIC_INFORMATION  0x3000                       // 基本信息
+#define GW_BASIC_INFORMATION  0x3001                           // 网关设置的基本信息
+#define GW_TIME_ZONE  0x3002                                   // 时区
+#define GW_SUB  0x3003                                         // 子设备信息
+#define GW_SUB_STATE  0x3004                                   // 子设备单项状态
+#define GW_SUB_SS  0x3005                                      // 子设备的SS获取
+#define GW_SUB_GS  0x3006                                      // 子设备单项状态值
+#define GW_SUB_SE_GET  0x3007                                  // 子设备获取设置值
+#define GW_SUB_SE_SET  0x3008                                  // 子设备设置设置值
+#define GW_ADD_DEVICE  0x3009                                  // 添加子设备模式
+#define GW_ADD_DEVICE_SUCCESSFUL  0x300a                       // 添加子设备成功返回
+#define SUB_DEL  0x300b                                        // 删除子设备
+#define SUB_ONLIE  0x300c                                      // 设备离线，上报发送数据
+#define GW_UP_DATA  0x300f                                     // 设备固件升级
+#define GW_GET_BASIC  0x3010                                   // 网关设备参数获取
+#define GWGW_SET_IP 0x3021                                     // 网关设置IP
+
+#define GW_SET_WASH_SUB  0x3022                                // 设置家庭布防模式下报警子设备
+#define GW_GET_WASH_SUB  0x3023                                // 获取家庭布防模式下报警子设备
+#define GW_SET_ALLLIGHT_ONOFF  0x3024                          // 一键控制ZIGBEE灯
+#define GW_SET_LINK_ALARM      0x3025                          // 关联声光警号// 网关设备ip
+#define GW_GET_LINK_ALARM   0x3026                             // 获取声光警号关联
+#define GW_SET_ALARM_TIMER  0x3027                             // 设置撤、布防、在家布防定时器
+#define GW_GET_ALARM_TIMER  0x3028                             // 获取撤、布防、在家布防定时器
+#define GW_SET_NIGHT_LIGHT  0x3029                             // 设置联动小夜灯设备
+#define GW_GET_NIGHT_LIGHT  0x302a                             // 获取联动小夜灯设备
+//不要加 ；
+
+typedef NS_ENUM(NSInteger, DEVICE_TYPE) {
+    
+    DEVICE_TYPE_DEVICE_NONE = 0,
+    
+    DEVICE_TYPE_ZIGBEE_RGB = 1,                          //ZIGBEE RGB灯
+    DEVICE_TYPE_ZIGBEE_ONE_ONOFF = 2,                    //ZIGBEE 一路开关
+    DEVICE_TYPE_ZIGBEE_TWO_ONOFF = 3,                    //ZIGBEE 二路开关
+    DEVICE_TYPE_ZIGBEE_THREE_ONOFF = 4,                  //ZIGBEE 三路开关
+    DEVICE_TYPE_ZIGBEE_RC = 5,                           //ZIGBEE 红外转发器
+    DEVICE_TYPE_ZIGBEE_RELAY = 6,                        //ZIGBEE 继电器
+    DEVICE_TYPE_ZIGBEE_BRIGHT_SWITCH = 7,                //调光开关
+    DEVICE_TYPE_ZIGBEE_LAMP_HEADER = 8,                  //灯头
+    DEVICE_TYPE_ZIGBEE_SCENE_SWITCH = 9,                 //情景开关
+    DEVICE_TYPE_ZIGBEE_FOUR_WHEEL = 10,                  //四驱灯控
+    
+    DEVICE_TYPE_ZIGBEE_DOORS = 17,                       //ZIGBEE 门磁
+    DEVICE_TYPE_ZIGBEE_WATER = 18,                       //ZIGBEE 水浸
+    DEVICE_TYPE_ZIGBEE_PIR = 19,                         //ZIGBEE 红外
+    DEVICE_TYPE_ZIGBEE_SMOKE = 20,                       //ZIGBEE 烟感
+    DEVICE_TYPE_ZIGBEE_THP = 21,                         //ZIGBEE 温湿度
+    DEVICE_TYPE_ZIGBEE_GAS = 22,                         //ZIGBEE 气感
+    DEVICE_TYPE_ZIGBEE_SOUND_AND_LIGHT_ALARM = 23,       //ZIGBEE 声光警号
+    
+    DEVICE_TYPE_ZIGBEE_CO = 24,                          //ZIGBEE 一氧化碳探测器
+    DEVICE_TYPE_ZIGBEE_ILLUMINANCE = 25,                 //ZIGBEE 光照度
+    DEVICE_TYPE_ZIGBEE_AIR = 26,                         //ZIGBEE 空气质量
+    DEVICE_TYPE_ZIGBEE_THERMOSTAT = 27,                  //ZIGBEE 温控器
+    DEVICE_TYPE_ZIGBEE_SHOCK = 28,                       //ZIGBEE 震动
+    
+    DEVICE_TYPE_ZIGBEE_SOS = 49,                         //ZIGBEE SOS报警器
+    DEVICE_TYPE_ZIGBEE_SW = 50,                          //ZIGBEE 遥控器
+    DEVICE_TYPE_ZIGBEE_PLUGIN = 67,                      //ZIGBEE 普通插座
+    DEVICE_TYPE_ZIGBEE_METRTING_PLUGIN = 68,             //ZIGBEE 计量插座
+    DEVICE_TYPE_ZIGBEE_CURTAIN_CONTROLLER = 69,                     ///ZIGBEE 窗帘电机
+    DEVICE_TYPE_ZIGBEE_INTELLIGENT_DOOR_LOCK  = 70,                  ///ZIGBEE 智能门锁
+    
+    ///Wifi设备
+    DEVICE_TYPE_WIFI_RC = 100,                  //红外遥控转发器
+    DEVICE_TYPE_WIFI_GATEWAY = 769,             //智能网关
+    DEVICE_TYPE_WIFI_GATEWAY_HS1GW_NEW = 770,   //新小网关
+    DEVICE_TYPE_WIFI_GATEWAY_HS2GW = 771,       //大网关
+    DEVICE_TYPE_WIFI_PLUGIN = 1041,             //智能插座
+    DEVICE_TYPE_WIFI_METRTING_PLUGIN = 1042,    //计量插座
+    DEVICE_TYPE_WIFI_AIR = 1043,                //空气质量
+    DEVICE_TYPE_WIFI_GAS = 1044,                //气感
+    DEVICE_TYPE_WIFI_IPC = 2049,                //摄像头
+    
+};
+
+typedef NS_ENUM(NSInteger, ACTION_TYPE) {
+    
+    CONTROL = 1,                    //控制请求
+    CONTROL_ACK = 2,                //控制请求回应
+    REPORT = 3,                     //设备主动上报
+    EVENT = 4,                      //事件
+    ALARM = 5,                      //报警
+    FAULT = 6,                      //故障
+    COERCION_OTA = 7,               //强制性升级
+    COERCION_OTA_ACK = 8,           //强制升级回复
+    OTA = 9,                        //手动升级
+    OTA_ACK = 10,                   //手动升级回复
+    SENDKEY = 11,                   //上报密匙
+    SENDLIST = 12,                  //发送子设备列表信息
+    GETDEVICEID = 13,               //获取设备id
+    GETDEVICEID_ACK = 14,           //获取设备id回复
+    GETTIME = 15,                   //获取时间
+    GETTIME_ACK = 16,               //获取时间回复
+    SCEN = 17,                      //执行场景
+    SCENE_ACK = 18,                 //执行场景回复
+    LINKAGE = 19,                   //执行联动
+    LINKAGE_ACK = 20,               //执行联动回复
+    SUB_ONLINE = 21,                //子设备在线状态
+    ONLINE = 22 ,                   //模块上线
+    DISCONNECT = 23,                //模块断开连接
+    DISCONNET = 33,                 //连接断开
+};
+
+typedef NS_ENUM(NSInteger, DATA_TYPE) {
+    
+    ACTION = 51,                     //动作
+    PASS = 52,                       //透传数据
+    POINT = 53,                      //数据端点值
+    RESULT = 54,                     //处理结果(1为成功0为失败)
+    ENCRYPT_TYPE = 55,               //加密类型
+    LIST = 56,                       //上传的子模块列表
+    TIESTAMP = 57,                   //获取时间回复的时间戳
+};
+
+typedef NS_ENUM(NSInteger, INFO_TYPE) {
+    
+    TYPE_DATA = 0x3000,                     //透传类信息
+    TYPE_REPORT = 0x5000,                   //设备主动发起的信息
+    
+};
+
+typedef NS_ENUM(NSInteger, DESTINATION_ID) {
+    
+    DESTINATION_ALL = 0xFFFF,                       //全体广播
+    DESTINATION_APP = 0xFFF1,                       //对APP组播
+    DESTINATION_DEVICE = 0xFFF2,                    //对设备组播
+    
+};
+
+typedef NS_ENUM(NSInteger, SOURCE_ID) {
+    
+    SOURCE_APP_SEND = 0x3021,                    //APP通过服务器发送数据的来源类型。
+    SOURCE_APP_BACK = 0x3022,                       //设备接收到app从服务器发送数据后，回复数据的来源类型。
+    SOURCE_DEVICE_SEND = 0x4000,                    //设备主动上报数据到服务器的来源类型
+    SOURCE_DEVICE_BACK = 0xFF32,                    //服务器主动发送数据的来源类型。
+    SOURCE_APP_UDP = 0xFF33,                        //APP通过UDP发送数据的来源类型。
+    
+};
+
+typedef NS_ENUM(NSInteger, RC) {
+    
+    SUCCESS = 0x0001,                                    //成功
+    UNKNOWN_ERROR = 0x0000,                              //未知错误
+    PARAMETER_ERROR = 0x0003,                            //参数错误
+    DECRYPTION_FAILURE = 0x0004,                         //解密失败 (明文回复)
+    THE_OID_DOES_NOT_EXIST = -3,                         //不存在该OID
+    CID_DOES_NOT_EXIST = -4,                         //CID不存在
+    PL_CANNOT_BE_EMPTY = -5,                             //PL中不能为空
+    TEID_CANNOT_BE_EMPTY = -6,                           //TEID不能为空
+    WIFI_GAS_PREHEATING = 10000,                         //WiFi气感预热中
+    APP_SEND = 0xffff,                                   //app发送
+};
+
+#endif /* Enum_h */

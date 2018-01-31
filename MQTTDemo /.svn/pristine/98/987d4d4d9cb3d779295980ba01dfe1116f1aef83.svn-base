@@ -1,0 +1,20 @@
+//
+//  HMUserInfoModel.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/18.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import "HMUserInfoModel.h"
+
+@implementation HMUserInfoModel
+
+- (instancetype)init{
+    if (self = [super init]) {
+        _userId = -1; _age = -1; _sex = -1;
+    }
+    return self;
+}
+
+@end

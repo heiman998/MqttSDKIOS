@@ -1,0 +1,18 @@
+//
+//  HmConstant.m
+//  HmMqttSdk
+//
+//  Created by mac on 2017/11/29.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import "HmConstant.h"
+
+ NSString *const CLIENID_A = @"{clientId}/A"; //通信模块发布子模块列表的主题
+ NSString *const CLIENID_B = @"{clientId}/B";  //通信模块发布point的主题
+ NSString *const CLIENID_C = @"{clientId}/C"; //通信模块发布pass指令回复的主题
+ NSString *const CLIENID_D = @"{clientId}/D"; //控制终端下发point的主题
+ NSString *const CLIENID_E = @"{clientId}/E"; //控制终端下发pass指令的主题
+ NSString *const CLIENID_F = @"{clientId}/F";
+ NSString *const CLIENID_G = @"{clientId}/G";
+

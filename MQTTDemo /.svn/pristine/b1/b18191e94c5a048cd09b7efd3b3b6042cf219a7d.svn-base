@@ -1,0 +1,30 @@
+//
+//  HMDevice.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/6.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface HMDevice : NSObject
+
+@property (nonatomic, copy)   NSString * deviceMac;          //设备mac地址
+@property (nonatomic, copy)   NSString * deviceName;         //设备名称
+@property (nonatomic, assign) NSInteger  deviceID;           //设备id
+@property (nonatomic, assign) NSInteger  pid;                //产品id
+@property (nonatomic, assign) NSInteger  type;               //设备类型
+@property (nonatomic, assign) Boolean    isSub;              //是否是子设备;
+@property (nonatomic, assign) Byte       version ;           //协议版本号，目前为2
+@property (nonatomic, copy)   NSString * hardwareVer;        //硬件版本号
+@property (nonatomic, copy)   NSString * softwareVer;        //软件版本号
+@property (nonatomic, copy)   NSString * zSoftwareVer;       //zigbee协调器
+@property (nonatomic, copy)   NSString * timeZone;           //时区
+@property (nonatomic, assign) NSInteger  factoryID ;         //厂商ID
+@property (nonatomic, copy)   NSString * acckey;             //公钥
+@property (nonatomic, copy)   NSString * aeskey;             //私钥
+@property (nonatomic, assign) NSInteger  deviceStates;       //设备在线状态 0 不在线 1为在线
+@property (nonatomic, assign) Boolean    isInit;             //设备是否初始化
+
+@end

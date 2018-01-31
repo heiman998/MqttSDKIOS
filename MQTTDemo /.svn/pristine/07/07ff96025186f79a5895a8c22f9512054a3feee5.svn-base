@@ -1,0 +1,182 @@
+//
+//  HMMQTTSdkEncoder.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/11/30.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "Enum.h"
+#import "HMGatewayInfo.h"
+#import "HMRgbLight.h"
+#import "HMMagneticDoor.h"
+#import "HMWaterLeach.h"
+#import "HMPir.h"
+#import "HMSmoke.h"
+#import "HMGas.h"
+#import "HMCo.h"
+#import "HMSos.h"
+#import "HMSw.h"
+#import "HMPlug.h"
+#import "HMSwitch.h"
+#import "HMRfirControll.h"
+#import "HMRelay.h"
+#import "HMLampHeader.h"
+#import "HMFourLight.h"
+#import "HMSoundAndLightAlarm.h"
+#import "HMIlluminance.h"
+#import "HMAir.h"
+#import "HMThermostat.h"
+#import "HMShock.h"
+#import "HMCurtainController.h"
+#import "HMThp.h"
+#import "HMMetringPlug.h"
+#import "HMTimer.h"
+#import "HMDevice.h"
+
+@interface HMMQTTSdkEncoder : NSObject
+
+/**
+ 获取设备版本信息方法
+ @param  device 设备属性
+ @return 版本信息
+ */
+-(NSData *) getEditionDataWithDevice:(HMDevice *)device;
+
+/**
+ 获取网关参数信息
+ @param device 设备属性
+ @return 获取网关数据
+ */
+-(NSData *) getGatewayInfoWithDevice:(HMDevice *)device;
+/**
+ 设置时区方法
+ @param  timerZone 时区信息 device 设备属性
+ @return 时区数据
+ */
+
+-(NSData *)setTimerZone:(NSString *) timerZone andDevice:(HMDevice *)device;
+
+/**
+ 设置网关参数信息
+ @param  gatewayInfo 网关参数模型 device 设备属性
+ @return 网关参数数据
+ */
+-(NSData *)setGatewayInfo:(HMGatewayInfo *)gatewayInfo andDevice:(HMDevice *)device;
+
+/**
+ 获取秘钥
+ @return 返回秘钥编码
+ */
+-(NSData *)getSecretKeyWithDevice:(HMDevice *)device;
+
+/**
+ * 设置网关ip
+ * @param device 网关设备
+ * @param ip       设备ip地址
+ * @return 设置网关ip信息
+ */
+-(NSData *)setGatewayIP:(NSString *)ip andDevice:(HMDevice *)device;
+
+
+//配网是配wifi设备  入网时入ZigBee设备
+/**
+ * 添加设备
+ * 使能设备加网  0x30表示退出入网模式,0x31表示进入入网模式；
+ * @param enable 0为允许，1为不允许 device 设备属性
+ * @return 添加设备入网 或者 退网数据
+ */
+-(NSData *)addSubDevice:(Boolean) enable andDevice:(HMDevice *)device;
+
+/**
+ * 删除子设备
+ * @param index 设备索引 device 设备属性
+ * @return 删除设备数据
+ */
+-(NSData *)deleteSubDevice:(NSInteger) index andDevice:(HMDevice *)device;
+
+/**
+ * 固件升级
+ * @param fType  值0x01,为wifi固件；值0x02,为ZigBee协调器固件；值0x03,为ZigBee子设备固件；值0x04,为声音升级。
+ * @param enable 2表示允许更新，否则不允许更新 device 设备属性
+ * @param type   设备类型当升级设备类型为zigbee子设备有时效。
+ * @return 固件升级信息
+ */
+-(NSData *) upDatairmware:(NSInteger) fType enable:(Boolean)enable type:(NSInteger)type andDevice:(HMDevice *)device;
+
+/**
+ * 设置联动小夜灯设备
+ *
+ * @param device 网关设备
+ * @param enable     01使能,00禁能；
+ * @param subList  子设备的index列表
+ * @return 小夜灯设备信息
+ */
+-(NSData *)setLinkNightLightWithSubList:(NSArray *)subList enable:(Boolean)enable andDevice:(HMDevice *)device;
+
+/**
+ * 设置网关在家庭布防模式下报警设备
+ *
+ * @param device 网关设备
+ * @param subList  子设备的index列表
+ * @return 小夜灯设备信息
+ */
+-(NSData *)setWashSubListWithSubList:(NSArray *)subList type:(NSInteger)type andDevice:(HMDevice *)device;
+
+/**
+ * 一键控制ZIGBEE灯
+ *
+ * @param device 网关设备
+ * @param onoff    1控制zigbee灯全开；（若为0则控制zigbee灯全关）
+ * @return 一键控制ZIGBEE灯信息
+ */
+
+/**
+ 获取撤、布防、在家布防定时器信息
+ @param  device 设备属性
+ @return 获取撤、布防、在家布防定时器信息
+ */
+- (NSData *)getAlarmTimerWithDevice:(HMDevice *)device;
+
+-(NSData *)setLightOnoffWithSwitch:(int)onoff andDevice:(HMDevice *)device;
+
+/**
+ * 设置撤、布防、在家布防定时器
+ * 撤防：将所有门磁、红外的撤布防状态设置为“撤防”；
+ * 布防：将所有门磁、红外的撤布防状态设置为“布防”；
+ * 在家布防：由用户选择所需要布防的门磁、红外，选择的设备将被设置为“布防”，没有选择的设备将被设置为“撤防”；
+ *
+ * @param type     1为在家布放 2为外出布放 0撤防
+ * @param device 网关设备
+ * @param hmTimer  海曼定时器
+ */
+-(NSData *)setAlarmTimerWithType:(NSInteger)type andDevice:(HMDevice *)device andHmTimer:(HMTimer *)hmTimer;
+
+/**
+ * 获取子设备数据
+ * @param hmDevice 网关设备
+ * @param cmd      设备属性 参考:Enum.h 文件 --宏
+ * @param index    子设备Index索引
+ * @return         获取子设备数据
+ */
+-(NSData *)getSubDevice:(HMDevice *)hmDevice andIndex:(NSInteger) index andCmd:(NSInteger)cmd;
+
+/**
+ * 获取ZB设备单项状态值
+ * @param hmDevice  网关设备
+ * @param index     子设备Index索引
+ * @return          ZB设备单项状态值
+ */
+- (NSData *)getZBDeviceSingleStateandDevice:(HMDevice *)hmDevice andIndex:(NSInteger)index andNumber:(NSInteger)number;
+
+/**
+ * 设置子设备属性
+ * @param type   设备类型 参考:Enum.h 文件
+ * @param index  设备索引 device 设备属性
+ * @param object 设备信息 ：子设备的各项属性，参考model
+ * @return   子设备属性数据
+ */
+-(NSData *)setDevicePropertyWithIndex:(DEVICE_TYPE)type deviceIndex:(NSInteger)index deviceInfo:(NSObject *) object andDevice:(HMDevice *)device;
+
+@end

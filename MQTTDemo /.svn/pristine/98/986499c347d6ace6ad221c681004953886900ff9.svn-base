@@ -1,0 +1,201 @@
+
+//  HJMqttManager.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/5.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import "HJMqttManager.h"
+#import <MQTTClient.h>
+#import "HmUtils.h"
+
+
+@interface HJMqttManager () <MQTTSessionDelegate, MQTTTransportDelegate>
+
+@property (nonatomic, strong) MQTTSession *mqttSession;
+
+@end
+
+@implementation HJMqttManager
+
++ (instancetype)manager {
+    static HJMqttManager *mqtt = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mqtt = [HJMqttManager new];
+    });
+    return mqtt;
+}
+
+//-(MQTTSession *)mqttSession{
+//    if (!_mqttSession) {
+//        CFUUIDRef uuid1 = CFUUIDCreate(kCFAllocatorDefault);
+//        CFStringRef cfstring = CFUUIDCreateString(kCFAllocatorDefault, uuid1);
+//        NSString * uuid = [NSString stringWithFormat:@"%@",cfstring];
+//        _mqttSession=[[MQTTSession alloc] initWithClientId:uuid];
+//    }
+//    return _mqttSession;
+//}
+
+#pragma mark -- 初始化
+
+- (void)initMQTT {
+    if (self.mqttSession) {
+        NSLog(@"已存在mqtt会话, 请先关闭");
+        return;
+    }
+    CFUUIDRef uuid1 = CFUUIDCreate(kCFAllocatorDefault);
+    CFStringRef cfstring = CFUUIDCreateString(kCFAllocatorDefault, uuid1);
+    NSString * uuid = [NSString stringWithFormat:@"%@",cfstring];
+    self.mqttSession=[[MQTTSession alloc] initWithClientId:uuid];
+//    self.mqttSession = [[MQTTSession alloc]init];
+    self.mqttSession.delegate = self;
+
+    // 目前不需要账号密码
+    //self.mqttSession.userName = @"账号";
+    //self.mqttSession.password = @"密码";
+}
+
+- (BOOL)connectWithHost:(NSString *)host port:(UInt32)port {
+    if (self.mqttSession.status == MQTTSessionStatusConnected) {
+        NSLog(@"已连接");
+        return YES;;
+    }
+    MQTTCFSocketTransport *transport = [MQTTCFSocketTransport new];
+    transport.port = port;
+    transport.host = host;
+    transport.delegate = self;
+    self.mqttSession.transport = transport;
+    // 会话连接并设置超时时间
+    BOOL is = [self.mqttSession connectAndWaitTimeout:1];
+    if (self.mqttSession.status == MQTTSessionStatusConnected) {
+        NSLog(@"已连接");
+        [self.mqttSession addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionOld context:nil];
+    }
+    return is;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    if (self.mqttSession.status == MQTTSessionStatusClosed) {
+        [self.mqttSession connect];
+    }
+}
+
+- (void)disconnect {
+    // 断开连接
+    [self.mqttSession disconnect];
+}
+
+- (void)close {
+    [self disconnect];
+    // 关闭
+    [self.mqttSession close];
+    self.mqttSession = nil;
+    
+    /**
+     因为调用disconnect和close都是回回调connectionClosed
+     所以要准确获取状态, 可以监听mqtt的status属性
+     */
+}
+
+#pragma mark -- 订阅
+//订阅遗言
+- (void)subscribeLastWordsWithHmDevice:(HMDevice *)hmDevice andHjMqttError:(HJMqttError)hjMqttError{
+    [self.mqttSession  subscribeToTopic:[self topicByHmDevice:hmDevice andType:@"G"] atLevel:MQTTQosLevelAtLeastOnce subscribeHandler:^(NSError *error, NSArray<NSNumber *> *gQoss) {hjMqttError(error);}];
+}
+- (void)subscribeLastWordsWithHmDevice:(HMDevice *)hmDevice{
+    [self.mqttSession subscribeToTopic:[self topicByHmDevice:hmDevice andType:@"G"] atLevel:MQTTQosLevelAtLeastOnce];
+}
+//通信模块回复主题
+- (void)subscribeWithHmDevice:(HMDevice *)hmDevice andHjMqttError:(HJMqttError)hjMqttError{
+    [self.mqttSession  subscribeToTopic:[self topicByHmDevice:hmDevice andType:@"C"] atLevel:MQTTQosLevelAtLeastOnce  subscribeHandler:^(NSError *error, NSArray<NSNumber *> *gQoss) {hjMqttError(error);}];
+}
+- (void)subscribeWithHmDevice:(HMDevice *)hmDevice{
+    [self.mqttSession subscribeToTopic:[self topicByHmDevice:hmDevice andType:@"C"] atLevel:MQTTQosLevelAtLeastOnce];
+}
+
+//取消订阅
+- (void)unsubscribeWithHmDevice:(HMDevice *)hmDevice andHjMqttError:(HJMqttError)hjMqttError{
+
+    [self.mqttSession  unsubscribeTopic:[self topicByHmDevice:hmDevice andType:@"C"] unsubscribeHandler:^(NSError *error) {hjMqttError(error);}];
+    [self.mqttSession  unsubscribeTopic:[self topicByHmDevice:hmDevice andType:@"G"] unsubscribeHandler:^(NSError *error) {hjMqttError(error);}];
+}
+- (void)unsubscribeWithHmDevice:(HMDevice *)hmDevice{
+
+    [self.mqttSession  unsubscribeTopic:[self topicByHmDevice:hmDevice andType:@"C"]];
+    [self.mqttSession  unsubscribeTopic:[self topicByHmDevice:hmDevice andType:@"G"]];
+}
+
+#pragma mark -- 发布消息
+//客户端发布消息
+- (void)publishWithData:(NSData *)data onHmDevice:(HMDevice *)hmDevice andHjMqttError:(HJMqttError)hjMqttError{
+    [self.mqttSession publishData:data onTopic:[self topicByHmDevice:hmDevice andType:@"E"] retain:NO qos:MQTTQosLevelAtLeastOnce  publishHandler:^(NSError *error) {hjMqttError(error);}];
+}
+- (void)publishWithData:(NSData *)data onHmDevice:(HMDevice *)hmDevice{
+    [self.mqttSession publishData:data onTopic:[self topicByHmDevice:hmDevice andType:@"E"]];
+}
+
+
+// 代理有连接, 接发消息, 等等的回调
+#pragma mark -- MQTTSessionDelegate
+
+// 接收到消息
+- (void)newMessage:(MQTTSession *)session data:(NSData *)data onTopic:(NSString *)topic qos:(MQTTQosLevel)qos retained:(BOOL)retained mid:(unsigned int)mid {
+    if ([self.delegate respondsToSelector:@selector(mqttNewMessageData:)]) {
+        [self.delegate mqttNewMessageData:data];
+    }
+}
+
+- (void)connected:(MQTTSession *)session {
+    if ([self.delegate respondsToSelector:@selector(mqttDidConnect)]) {
+        [self.delegate mqttDidConnect];
+    }
+}
+
+- (void)connectionClosed:(MQTTSession *)session {
+    if ([self.delegate respondsToSelector:@selector(mqttDidConnectionClosed)]) {
+        [self.delegate mqttDidConnectionClosed];
+    }
+}
+
+- (void)connectionError:(MQTTSession *)session error:(NSError *)error {
+    NSLog(@"%s", __func__);
+}
+
+- (void)connected:(MQTTSession *)session sessionPresent:(BOOL)sessionPresent {
+    NSLog(@"%s", __func__);
+}
+
+- (void)connectionRefused:(MQTTSession *)session error:(NSError *)error {
+    NSLog(@"%s", __func__);
+}
+
+#pragma mark -- MQTTTransportDelegate
+
+- (void)mqttTransport:(nonnull id<MQTTTransport>)mqttTransport didReceiveMessage:(nonnull NSData *)message {
+    NSLog(@"%s", __func__);
+}
+
+- (void)mqttTransportDidOpen:(_Nonnull id<MQTTTransport>)mqttTransport {
+    NSLog(@"%s", __func__);
+}
+
+- (void)mqttTransport:(_Nonnull id<MQTTTransport>)mqttTransport didFailWithError:(nullable NSError *)error {
+    NSLog(@"%s", __func__);
+}
+
+- (void)mqttTransportDidClose:(_Nonnull id<MQTTTransport>)mqttTransport {
+    NSLog(@"%s", __func__);
+}
+
+- (NSString *)topicByHmDevice:(HMDevice *)device andType:(NSString *)type {
+    NSInteger pid = device.pid;
+    NSInteger factoryId = device.factoryID;
+    NSString * macId = device.deviceMac;
+    NSString * topic = [NSString stringWithFormat:@"%ld/%ld/%@/%@",(long)pid,(long)factoryId,macId,type];
+    return topic;
+}
+
+@end
+

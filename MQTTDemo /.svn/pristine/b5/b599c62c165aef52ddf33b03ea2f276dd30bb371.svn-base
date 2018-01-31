@@ -1,0 +1,125 @@
+//
+//  HMFourLight.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/5.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface HMFourLight : NSObject
+
+/**
+ * 开关状态 BIT0：一路，0为关闭，1为打开； BIT1：一路，0为关闭，1为打开； BIT2：一路，0为关闭，1为打开；BIT3：一路，0为关闭，1为打开；
+ */
+@property (nonatomic, assign)NSInteger onoff1;
+@property (nonatomic, assign)NSInteger onoff2;
+@property (nonatomic, assign)NSInteger onoff3;
+@property (nonatomic, assign)NSInteger onoff4;
+
+/**
+ * 亮度值 BIT0-BIT7：一路，取值范围0-100，即0x00-0x64;BIT8-BIT15：二路，取值范围0-100，即0x00-0x64;BIT16-BIT23：三路，取值范围0-100，即0x00-0x64;BIT24-BIT31：四路，取值范围0-100，即0x00-0x64;
+ */
+@property (nonatomic, assign)NSInteger brightness1;
+@property (nonatomic, assign)NSInteger brightness2;
+@property (nonatomic, assign)NSInteger brightness3;
+@property (nonatomic, assign)NSInteger brightness4;
+
+/**
+ * 冷色调，为减少字节数取值范围（0-9） 对应到设备算法X*500+2000（3000-6500，共10个档位）BIT0-BIT3：一路，取值范围为2-9;BIT4-BIT7：二路，取值范围为2-9;BIT8-BIT11：三路，取值范围为2-9;BIT12-BIT15：四路，取值范围为2-9;
+ */
+@property (nonatomic, assign)NSInteger cwl1;
+@property (nonatomic, assign)NSInteger cwl2;
+@property (nonatomic, assign)NSInteger cwl3;
+@property (nonatomic, assign)NSInteger cwl4;
+
+/**
+ * 一路
+ */
+
+@property (nonatomic, assign)NSInteger wf1;;//使能位BIT7；WFu,bit0-bit6为周一至周日bit7 定时器使能定时器单次功能与周期功能是二选一，bit0-bit6都是0为单次，否则为周期，周期月、日无效
+
+@property (nonatomic, assign)NSInteger sDay1;//开始日
+
+@property (nonatomic, assign)NSInteger sMonth1;//开始月
+
+@property (nonatomic, assign)NSInteger sHour1;//开始时
+
+@property (nonatomic, assign)NSInteger  sMinutes1;//开始分
+
+@property (nonatomic, assign)NSInteger eDay1;//结束日
+
+@property (nonatomic, assign)NSInteger eMonth1;//结束月
+
+@property (nonatomic, assign)NSInteger eHour1;//结束时
+
+@property (nonatomic, assign)NSInteger eMinutes1;//结束分
+
+/**
+ * 二路
+ */
+
+@property (nonatomic, assign)NSInteger wf2;//使能位BIT7；WFu,bit0-bit6为周一至周日bit7 定时器使能定时器单次功能与周期功能是二选一，bit0-bit6都是0为单次，否则为周期，周期月、日无效
+
+@property (nonatomic, assign)NSInteger sDay2;//开始日
+
+@property (nonatomic, assign)NSInteger sMonth2;//开始月
+
+@property (nonatomic, assign)NSInteger sHour2;//开始时
+
+@property (nonatomic, assign)NSInteger  sMinutes2;//开始分
+
+@property (nonatomic, assign)NSInteger eDay2;//结束日
+
+@property (nonatomic, assign)NSInteger eMonth2;//结束月
+
+@property (nonatomic, assign)NSInteger eHour2;//结束时
+
+@property (nonatomic, assign)NSInteger eMinutes2;//结束分
+
+/**
+ * 三路
+ */
+
+@property (nonatomic, assign)NSInteger wf3;//使能位BIT7；WFu,bit0-bit6为周一至周日bit7 定时器使能定时器单次功能与周期功能是二选一，bit0-bit6都是0为单次，否则为周期，周期月、日无效
+
+@property (nonatomic, assign)NSInteger sDay3;//开始日
+
+@property (nonatomic, assign)NSInteger sMonth3;//开始月
+
+@property (nonatomic, assign)NSInteger sHour3;//开始时
+
+@property (nonatomic, assign)NSInteger  sMinutes3;//开始分
+
+@property (nonatomic, assign)NSInteger eDay3;//结束日
+
+@property (nonatomic, assign)NSInteger eMonth3;//结束月
+
+@property (nonatomic, assign)NSInteger eHour3;//结束时
+
+@property (nonatomic, assign)NSInteger eMinutes3;//结束分
+
+/**
+ * 四路
+ */
+
+@property (nonatomic, assign)NSInteger wf4;//使能位BIT7；WFu,bit0-bit6为周一至周日bit7 定时器使能定时器单次功能与周期功能是二选一，bit0-bit6都是0为单次，否则为周期，周期月、日无效
+
+@property (nonatomic, assign)NSInteger sDay4;//开始日
+
+@property (nonatomic, assign)NSInteger sMonth4;//开始月
+
+@property (nonatomic, assign)NSInteger sHour4;//开始时
+
+@property (nonatomic, assign)NSInteger  sMinutes4;//开始分
+
+@property (nonatomic, assign)NSInteger eDay4;//结束日
+
+@property (nonatomic, assign)NSInteger eMonth4;//结束月
+
+@property (nonatomic, assign)NSInteger eHour4;//结束时
+
+@property (nonatomic, assign)NSInteger eMinutes4;//结束分
+
+@end

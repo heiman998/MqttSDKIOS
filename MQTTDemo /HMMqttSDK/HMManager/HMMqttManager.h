@@ -1,0 +1,312 @@
+//
+//  HMMqttManager.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/4.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "HMDevice.h"
+#import "HMTimer.h"
+#import "Enum.h"
+#import "HMGatewayModel.h"
+
+/**
+ 海曼Mqtt通信错误码回调Block
+
+ @param error 错误码
+ */
+typedef void (^hmMqttError)(NSError *error);
+
+/**
+ 编解码参数错误回调码Block
+
+ @param fault 错误码
+ */
+typedef void(^hmCoderError) (NSInteger fault);
+
+/**
+ 回调信息block
+
+ @param data 回调信息
+ */
+typedef void(^CallBackBlcok) (id data);
+
+@protocol HMMQTTDelegate <NSObject>
+
+@optional
+
+/**
+ 已连接
+ */
+- (void)mqttDidConnect;
+/**
+ 已断开连接
+ */
+- (void)mqttDidConnectionClosed;
+/**
+ 设备是否上线
+ */
+- (void)mqttNewMessageData:(BOOL)isOnline;
+
+@end
+
+@interface HMMqttManager : NSObject
+
+/**
+ HMMqttManager代理
+ */
+@property (nonatomic, weak) id <HMMQTTDelegate> delegate;
+
+/**
+ 单例
+ */
++ (instancetype)manager;
+/**
+ * 初始化mqtt
+ */
+- (void)initSDK;
+
+/**
+ * 关闭mqtt
+ */
+- (void)close;
+
+/**
+ 连接MQTT
+
+ @param host   MQTT_ip地址
+ @param port   端口号
+ @return       是否连接成功
+ */
+- (BOOL)connectWithHost:(NSString *)host port:(UInt32)port;
+/** 断开连接 */
+- (void)disconnect;
+
+/**
+ 订阅主题
+
+ @param hmDevice   设备属性 (主题构成 : （deviceMac:设备mac地址）+（factoryID:厂商ID）+（pid:产品id）)
+ @param hmMqttError  Mqtt相关错误码回调
+ */
+- (void)subscribeWithHmDevice:(HMDevice *)hmDevice  andHmMqttError:(hmMqttError)hmMqttError;
+- (void)subscribeWithHmDevice:(HMDevice *)hmDevice ;
+
+/**
+ 订阅遗言
+
+ @param hmDevice    设备属性 (遗言构成 : （deviceMac:设备mac地址）+（factoryID:厂商ID）+（pid:产品id）)
+ @param hmMqttError  Mqtt相关错误码回调
+ */
+- (void)subscribeLastWordsWithHmDevice:(HMDevice *)hmDevice andHmMqttError:(hmMqttError)hmMqttError;
+- (void)subscribeLastWordsWithHmDevice:(HMDevice *)hmDevice ;
+
+/**
+ 取消订阅
+
+ @param hmDevice     设备属性 (遗言构成 : （deviceMac:设备mac地址）+（factoryID:厂商ID）+（pid:产品id）)
+ @param hmMqttError  Mqtt相关错误码回调
+ */
+- (void)unsubscribeWithHmDevice:(HMDevice *)hmDevice  andHmMqttError:(hmMqttError)hmMqttError;
+- (void)unsubscribeWithHmDevice:(HMDevice *)hmDevice ;
+
+#pragma mark -----------------mqtt通信接口------------------------------
+
+/**
+ 获取密钥
+ 
+ @param hmDevice     设备的相关属性 （具体可根据 HMDevice这个类的注解、文档、Demo进行操作
+ @param success      返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)getSecretKeyWithHmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError coderErrorBlock:(hmCoderError)error;
+
+/**
+ 获取设备的版本信息
+ 
+ @param hmDevice     设备的相关属性
+ @param success      返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void) getDeviceEditionInformationWithHmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError coderErrorBlock:(hmCoderError)error;
+
+
+/**
+ 获取网关的参数信息
+ 
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void) getGatewayParametersWithHmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+
+/**
+ 设置网关的参数信息
+ 
+ @param gatewayInfo  网关的参数信息
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void) setGatewayParametersWithInfo:(HMGatewayModel *)gatewayInfo HmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 设置时区
+ 
+ @param hmDevice     设备的相关属性（具体可根据 HMDevice这个类的注解、文档、Demo进行操作）
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void) setTimerZoneWithHmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 设置网关ip
+ 
+ @param ip           ip地址
+ @param hmDevice     设备的相关属性（具体可根据 HMDevice这个类的注解、文档、Demo进行操作）
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)setGatewayIp:(NSString *)ip hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+
+/**
+ 固件升级
+ 
+ @param fType        值0x01,为wifi固件；值0x02,为ZigBee协调器固件；值0x03,为ZigBee子设备固件；值0x04,为声音升级
+ @param enable       2表示允许更新，否则不允许更新 device 设备属性
+ @param zType        设备类型当升级设备类型为zigbee子设备有时效。
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)updateFirmwareWithDeviceType:(NSInteger) fType enable:(Boolean)enable zigBeeType:(NSInteger)zType hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 设置联动小夜灯设备
+ 
+ @param subList      子设备的index列表
+ @param enable       01使能,00禁能；
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)setLinkNightLightWithSubList:(NSArray *)subList enable:(BOOL)enable hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 设置网关在家庭布防模式下报警子设备
+ 
+ @param sublist      子设备的index列表
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)setHomeDefenseWithSubDeviceList:(NSArray *)sublist hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 一键控制ZIGBEE灯
+ 
+ @param onoff        1控制zigbee灯全开（若为0则控制zigbee灯全关）
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)setLightSwitchWithonoff:(NSInteger )onoff hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 设置撤、布防、在家布防定时器
+ 
+ @param type         1为在家布放 2为外出布放 0撤防
+ @param hmTimer      海曼定时器
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)setAlarmTimerWithWitType:(NSInteger)type andHmTimer:(HMTimer *)hmTimer hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 获取撤、布防、在家布防定时器信息
+ 
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)getAlarmTimerInformationWithHmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 子设备入网
+ 
+ @param enable       是否允许入网  YES / NO
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)addSubDevice:(BOOL)enable hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 删除子设备
+ 
+ @param subIndex     子设备index
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)deleteSubDeviceWithIndex:(NSInteger)subIndex hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+/**
+ 设置子设备属性
+ 
+ @param type         设备类型 参考:Enum.h 文件
+ @param subIndex        设备索引 device 设备属性(服务器获取)
+ @param object       设备信息 ：子设备对象的各项属性，参考classModel各对象
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)setDevicePropertyWithSubDeviceType:(DEVICE_TYPE)type subIndex:(NSInteger)subIndex deviceInfo:(NSObject *) object hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+
+/**
+ 获取子设备数据
+ 
+ @param subIndex     子设备Index索引
+ @param cmd          设备属性 参考:Enum.h 文件 --宏
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+- (void)getSubDeviceInfoWithSubIndex:(NSInteger)subIndex andCmd:(NSInteger)cmd hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+
+/**
+ 获取ZB设备单项状态值
+ 
+ @param index        子设备Index索引
+ @param number       子设备属性下标 参考协议
+ @param hmDevice     设备的相关属性
+ @param success      mqtt返回消息回调
+ @param hmMqttError  Mqtt相关错误码回调
+ @param error        参数信息错误码回调
+ */
+-(void)getZBDeviceSingleStateAndSubIndex:(NSInteger)index andNumber:(NSInteger)number hmDevice:(HMDevice *)hmDevice successBlock:(CallBackBlcok)success hmMqttError:(hmMqttError)hmMqttError errorBlock:(hmCoderError)error;
+
+
+@end

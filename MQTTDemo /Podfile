@@ -1,0 +1,13 @@
+platform :ios, '8.0'
+
+target "MQTTHJ" do
+
+pod 'AFNetworking'
+
+pod ‘MQTTClient’
+
+pod 'JSONModel'
+
+
+end
+

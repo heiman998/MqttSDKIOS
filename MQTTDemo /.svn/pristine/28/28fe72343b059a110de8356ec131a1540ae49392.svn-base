@@ -1,0 +1,22 @@
+//
+//  HMUserInfo.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/25.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import "HMUserInfo.h"
+
+@implementation HMUserInfo
+
++ (instancetype)fourLightWithDict:(NSDictionary *)dict
+{
+    HMUserInfo *model = [[HMUserInfo alloc] init];
+    [model setValuesForKeysWithDictionary:dict];
+    return model;
+}
+
+
+
+@end

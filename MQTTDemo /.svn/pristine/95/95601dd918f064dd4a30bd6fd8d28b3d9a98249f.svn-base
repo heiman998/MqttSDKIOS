@@ -1,0 +1,45 @@
+//
+//  HMHttpTool.h
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2017/12/22.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface HMHttpTool : NSObject
+
++ (instancetype)manager;//单例 
+
+/**
+ *  基础方法请求网络数据
+ */
+-(void)postDataWithUrl:(NSString *)url
+            parameters:(NSDictionary *)parameters
+               success:(void (^)(id responseObject))success
+               failure:(void (^)(NSError *error))failure;
+
+-(void)getDataWithUrl:(NSString *)url
+           parameters:(NSDictionary *)parameters
+              success:(void (^)(id responseObject))success
+              failure:(void (^)(NSError *error))failure;
+
+-(void)getDataWithUrl:(NSString *)url
+               header:(NSString *)header
+           parameters:(NSDictionary *)parameters
+              success:(void (^)(id responseObject))success
+              failure:(void (^)(NSError *error))failure;
+
+-(void)deleteDataWithUrl:(NSString *)url
+              parameters:(NSDictionary *)parameters
+                 success:(void (^)(id responseObject))success
+                 failure:(void (^)(NSError *error))failure;
+
+-(void)deleteDataWithUrl:(NSString *)url
+                  header:(NSString *)header
+              parameters:(NSDictionary *)parameters
+                 success:(void (^)(id responseObject))success
+                 failure:(void (^)(NSError *error))failure;
+
+@end

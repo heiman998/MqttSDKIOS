@@ -1,0 +1,87 @@
+//
+//  HM_MAC_Timer.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/9.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import "HM_MAC_Timer.h"
+
+@implementation HM_MAC_Timer
+
+
++ (NSString*)getTime{
+    
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init] ;
+    
+    [formatter setDateStyle:NSDateFormatterMediumStyle];
+    
+    [formatter setTimeStyle:NSDateFormatterShortStyle];
+    
+    [formatter setDateFormat:@"YYYY-MM-dd HH:mm:ss SSS"]; // ----------设置你想要的格式,hh与HH的区别:分别表示12小时制,24小时制
+    
+    //设置时区,这个对于时间的处理有时很重要
+    
+    NSTimeZone* timeZone = [NSTimeZone timeZoneWithName:@"Asia/Shanghai"];
+    
+    [formatter setTimeZone:timeZone];
+    
+    NSDate *datenow = [NSDate date];//现在时间,你可以输出来看下是什么格式
+    
+    NSString *timeSp = [NSString stringWithFormat:@"%ld", (long)[datenow timeIntervalSince1970]*1000];
+    
+    return timeSp;
+}
+
++ (NSString *)switchTime:(NSString *)timeStr{
+    NSTimeInterval time1=[timeStr doubleValue]+28800;//因为时差问题要加8小时 == 28800 sec
+    NSDate *detaildate=[NSDate dateWithTimeIntervalSince1970:time1];
+    NSLog(@"date:%@",[detaildate description]);
+    //实例化一个NSDateFormatter对象
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //设定时间格式,这里可以设置成自己需要的格式
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSString *currentDateStr = [dateFormatter stringFromDate: detaildate];
+    return currentDateStr;
+}
+
+#pragma mark - 将某个时间转化成 时间戳
+
++(NSInteger)timeSwitchTimestamp:(NSString *)formatTime andFormatter:(NSString *)format{
+    
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateStyle:NSDateFormatterMediumStyle];
+    [formatter setTimeStyle:NSDateFormatterShortStyle];
+    [formatter setDateFormat:format]; //(@"YYYY-MM-dd hh:mm:ss") ----------设置你想要的格式,hh与HH的区别:分别表示12小时制,24小时制
+    NSTimeZone* timeZone = [NSTimeZone timeZoneWithName:@"Asia/Beijing"];
+    [formatter setTimeZone:timeZone];
+    NSDate* date = [formatter dateFromString:formatTime]; //------------将字符串按formatter转成nsdate
+    //时间转时间戳的方法:
+    NSInteger timeSp = [[NSNumber numberWithDouble:[date timeIntervalSince1970]] integerValue];
+//    NSLog(@"将某个时间转化成 时间戳&&&&&&&timeSp:%ld",(long)timeSp); //时间戳的值
+    return timeSp;
+    
+}
+
+//将某个时间戳转化成 时间
+
+#pragma mark - 将某个时间戳转化成 时间
+
++(NSString *)timestampSwitchTime:(NSInteger)timestamp andFormatter:(NSString *)format{
+
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateStyle:NSDateFormatterMediumStyle];
+    [formatter setTimeStyle:NSDateFormatterShortStyle];
+    [formatter setDateFormat:format]; // （@"YYYY-MM-dd hh:mm:ss"）----------设置你想要的格式,hh与HH的区别:分别表示12小时制,24小时制
+    NSTimeZone *timeZone = [NSTimeZone timeZoneWithName:@"Asia/Beijing"];
+    [formatter setTimeZone:timeZone];
+    NSDate *confromTimesp = [NSDate dateWithTimeIntervalSince1970:timestamp];
+//    NSLog(@"1296035591  = %@",confromTimesp);
+    NSString *confromTimespStr = [formatter stringFromDate:confromTimesp];
+    return confromTimespStr;
+    
+}
+
+
+@end

@@ -1,0 +1,24 @@
+//
+//  HMGatewayModel.m
+//  HmMqttSdk
+//
+//  Created by 研发ios工程师 on 2018/1/18.
+//  Copyright © 2018年 mac. All rights reserved.
+//
+
+#import "HMGatewayModel.h"
+
+@implementation HMGatewayModel
+
+- (instancetype)init
+{
+    if (self = [super init]) {
+        _Alarmlevel = -1;_Soundlevel=-1;_Betimer=-1;_Betimer=-1;
+        _Gwlanguage = -1;_Gwlightlevel = -1;_Gwlightonoff = -1;
+        _Lgtimer = -1; _Armtype = -1;
+    }
+    return self;
+}
+
+
+@end

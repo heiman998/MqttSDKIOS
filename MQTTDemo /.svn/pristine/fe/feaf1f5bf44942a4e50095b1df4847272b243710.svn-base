@@ -1,0 +1,46 @@
+//
+//  HmBaseInfoModel.h
+//  HmMqttSdk
+//
+//  Created by mac on 2017/11/28.
+//  Copyright © 2017年 mac. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+@interface HmBaseInfoModel : NSObject
+/**
+ * 信息包类型
+ */
+@property (nonatomic, assign) NSInteger InfoType;
+/**
+ * 信息包接收方DeviceID；广播地址时该值为0xFFFF
+ */
+@property (nonatomic, assign) NSInteger DestinationID;
+/**
+ * 服务器发的数据，或UDP局域网发的数据
+ */
+@property (nonatomic, assign) NSInteger sourceID;
+/**
+ * 序列号：每发送一包数据序列号加
+ * 1；重复发送序列号不变；
+ * 2．发送和返回的序列号必须相同；
+ * 3．序列号循环使用；
+ */
+@property (nonatomic, assign) NSInteger sn;
+/**
+ * 命令字（见《命令字说明》部分）
+ */
+@property (nonatomic, assign) NSInteger cmd;
+/**
+ * 是指data信息包有效数据的长度
+ */
+@property (nonatomic, assign) NSInteger len;
+/**
+ * Return code（RC）+信息包有效数据
+ */
+@property (nonatomic, strong) NSData *data;
+
+-(NSData *) toModelByte;
+
+@end
